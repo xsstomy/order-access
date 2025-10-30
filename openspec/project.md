@@ -9,7 +9,7 @@ Order-access 是一个基于订单号的轻量级内容访问验证系统，用�
 
 ## 技术栈
 - **后端**: Node.js + Express.js
-- **数据库**: SQLite + better-sqlite3
+- **数据库**: SQLite + sqlite3 (标准npm包)
 - **限流**: express-rate-limit
 - **会话管理**: Cookie-session 或 JWT（2小时会话保持）
 - **反向代理**: Caddy/Nginx

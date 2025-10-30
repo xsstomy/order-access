@@ -229,13 +229,8 @@ dismissOverlay();
 // }, 1000); // 延迟 1 秒钟再绑定 scroll
 
 // ==============================================
-// 订单验证系统 JavaScript
+// 前后端分离版本 - 订单验证系统
 // ==============================================
-
-// 验证相关的全局变量
-let currentSessionId = null;
-let sessionCheckInterval = null;
-let sessionEndTime = null;
 
 // DOM 元素
 const verificationElements = {
@@ -243,283 +238,165 @@ const verificationElements = {
     verificationForm: document.getElementById("verificationForm"),
     orderNumberInput: document.getElementById("orderNumber"),
     submitBtn: document.getElementById("submitBtn"),
-    btnText: document.querySelector(".btn-text"),
-    btnLoading: document.querySelector(".btn-loading"),
-    errorMessage: document.getElementById("errorMessage"),
-    successMessage: document.getElementById("successMessage"),
-    errorText: document.querySelector(".error-message .message-text"),
-    successText: document.querySelector(".success-message .message-text"),
-    verificationStatus: document.getElementById("verificationStatus"),
-    sessionTimer: document.getElementById("sessionTimer"),
     logoutBtn: document.getElementById("logoutBtn"),
     refreshSessionBtn: document.getElementById("refreshSessionBtn"),
-    tutorialContent: document.querySelector(".container"),
 };
 
-// 验证状态管理
-function showLoading(isLoading) {
-    if (isLoading) {
-        verificationElements.submitBtn.disabled = true;
-        verificationElements.btnText.style.display = "none";
-        verificationElements.btnLoading.style.display = "inline-flex";
-    } else {
-        verificationElements.submitBtn.disabled = false;
-        verificationElements.btnText.style.display = "inline";
-        verificationElements.btnLoading.style.display = "none";
-    }
-}
-
-function hideMessages() {
-    verificationElements.errorMessage.style.display = "none";
-    verificationElements.successMessage.style.display = "none";
-}
-
-function showError(message) {
-    hideMessages();
-    verificationElements.errorText.textContent = message;
-    verificationElements.errorMessage.style.display = "flex";
-}
-
-function showSuccess(message) {
-    hideMessages();
-    verificationElements.successText.textContent = message;
-    verificationElements.successMessage.style.display = "flex";
-}
-
-function showVerificationOverlay() {
-    verificationElements.verificationOverlay.style.display = "flex";
-    document.body.style.overflow = "hidden"; // 禁止滚动
-    verificationElements.verificationStatus.style.display = "none";
-}
-
-function hideVerificationOverlay() {
-    verificationElements.verificationOverlay.style.display = "none";
-    document.body.style.overflow = ""; // 恢复滚动
-    verificationElements.verificationStatus.style.display = "flex";
-}
-
-// 验证订单号
+// 验证订单号 - 使用新的API模块
 async function verifyOrder(orderNumber) {
     try {
-        const response = await fetch("/api/verify", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ orderNumber }),
-        });
+        uiManager.showLoading('submitBtn', true);
+        uiManager.hideMessages();
 
-        const result = await response.json();
+        const result = await api.verifyOrder(orderNumber);
 
         if (result.success) {
-            currentSessionId = result.sessionId;
-            sessionEndTime = new Date(result.sessionExpiresAt);
+            uiManager.showMessage('success', '验证成功！正在跳转...');
 
-            // 保存sessionId到localStorage
-            localStorage.setItem("sessionId", currentSessionId);
-            localStorage.setItem("sessionEndTime", sessionEndTime.toISOString());
-
-            showSuccess("验证成功！正在跳转...");
+            // 更新UI状态
+            if (result.sessionId) {
+                const sessionData = {
+                    sessionId: result.sessionId,
+                    orderNumber: orderNumber,
+                    expiresAt: new Date(result.sessionExpiresAt),
+                    remainingTime: new Date(result.sessionExpiresAt) - new Date()
+                };
+                uiManager.updateSessionStatus(sessionData);
+            }
 
             setTimeout(() => {
-                hideVerificationOverlay();
-                startSessionTimer();
+                uiManager.hideVerificationOverlay();
                 dismissOverlay(); // 关闭原有的教程提示覆盖层
+                loadTutorialContent(); // 加载教程内容
             }, 1500);
         } else {
-            showError(result.message || "订单号无效或已过期");
+            uiManager.showMessage('error', result.message || "订单号无效或已过期");
         }
     } catch (error) {
         console.error("验证请求失败:", error);
-        showError("网络错误，请稍后重试");
+        uiManager.showMessage('error', "网络错误，请稍后重试");
+    } finally {
+        uiManager.showLoading('submitBtn', false);
     }
 }
 
-// 会话管理
-function startSessionTimer() {
-    if (sessionCheckInterval) {
-        clearInterval(sessionCheckInterval);
-    }
-
-    updateSessionTimer();
-    sessionCheckInterval = setInterval(updateSessionTimer, 1000);
-}
-
-function updateSessionTimer() {
-    if (!sessionEndTime) return;
-
-    const now = new Date();
-    const remaining = sessionEndTime - now;
-
-    if (remaining <= 0) {
-        handleSessionExpired();
-        return;
-    }
-
-    const hours = Math.floor(remaining / (1000 * 60 * 60));
-    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
-
-    let timeText = "";
-    if (hours > 0) {
-        timeText = `${hours}小时${minutes}分`;
-    } else if (minutes > 0) {
-        timeText = `${minutes}分${seconds}秒`;
-    } else {
-        timeText = `${seconds}秒`;
-    }
-
-    verificationElements.sessionTimer.textContent = `剩余: ${timeText}`;
-}
-
-function handleSessionExpired() {
-    if (sessionCheckInterval) {
-        clearInterval(sessionCheckInterval);
-    }
-    currentSessionId = null;
-    sessionEndTime = null;
-    showVerificationOverlay();
-    showError("会话已过期，请重新验证订单号");
-}
-
-// 检查会话状态
+// 检查会话状态 - 使用新的API模块
 async function checkSessionStatus() {
     try {
-        // 从localStorage获取保存的sessionId
-        const savedSessionId = localStorage.getItem("sessionId");
-        const savedSessionEndTime = localStorage.getItem("sessionEndTime");
+        const result = await api.checkSessionStatus();
 
-        if (!savedSessionId || !savedSessionEndTime) {
-            showVerificationOverlay();
-            return;
-        }
-
-        // 检查本地保存的会话时间是否已过期
-        const endTime = new Date(savedSessionEndTime);
-        if (new Date() >= endTime) {
-            // 清理过期的会话数据
-            localStorage.removeItem("sessionId");
-            localStorage.removeItem("sessionEndTime");
-            showVerificationOverlay();
-            return;
-        }
-
-        // 向服务器验证会话状态
-        const response = await fetch(`/api/verify/status?sessionId=${encodeURIComponent(savedSessionId)}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        const result = await response.json();
-
-        if (result.success && result.valid) {
-            currentSessionId = result.sessionId;
-            sessionEndTime = new Date(result.sessionExpiresAt);
-
-            // 更新localStorage中的会话时间
-            localStorage.setItem("sessionEndTime", sessionEndTime.toISOString());
-
-            hideVerificationOverlay();
-            startSessionTimer();
+        if (result.success && result.authenticated && result.data) {
+            uiManager.hideVerificationOverlay();
+            uiManager.updateSessionStatus({
+                sessionId: result.data.sessionId,
+                orderNumber: result.data.orderNumber,
+                expiresAt: new Date(result.data.expiresAt),
+                remainingTime: result.data.remainingTime
+            });
             dismissOverlay(); // 关闭教程提示覆盖层
+            await loadTutorialContent(); // 加载教程内容
         } else {
-            // 清理无效的会话数据
-            localStorage.removeItem("sessionId");
-            localStorage.removeItem("sessionEndTime");
-            showVerificationOverlay();
+            uiManager.showVerificationOverlay();
         }
     } catch (error) {
         console.error("检查会话状态失败:", error);
-        showVerificationOverlay();
+        uiManager.showVerificationOverlay();
     }
 }
 
-// 刷新会话
+// 刷新会话 - 使用新的API模块
 async function refreshSession() {
     try {
-        const response = await fetch("/api/verify/refresh", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        const result = await api.refreshSession();
 
-        const result = await response.json();
-
-        if (result.success) {
-            sessionEndTime = new Date(result.sessionExpiresAt);
-            showSuccess("会话已刷新");
-            setTimeout(hideMessages, 2000);
+        if (result.success && result.data) {
+            uiManager.showMessage('success', '会话已刷新');
+            uiManager.updateSessionStatus({
+                sessionId: api.getSessionId(),
+                expiresAt: new Date(result.data.expiresAt),
+                remainingTime: result.data.remainingTime
+            });
+            setTimeout(() => uiManager.hideMessages(), 2000);
         } else {
-            showError(result.message || "刷新会话失败");
+            uiManager.showMessage('error', result.message || "刷新会话失败");
         }
     } catch (error) {
         console.error("刷新会话失败:", error);
-        showError("网络错误，请稍后重试");
+        uiManager.showMessage('error', "网络错误，请稍后重试");
     }
 }
 
-// 退出登录
+// 退出登录 - 使用新的API模块
 async function logout() {
     try {
-        const savedSessionId = localStorage.getItem("sessionId");
-        const response = await fetch("/api/verify/logout", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ sessionId: savedSessionId }),
-        });
+        await api.logout();
     } catch (error) {
         console.error("退出登录失败:", error);
     } finally {
-        if (sessionCheckInterval) {
-            clearInterval(sessionCheckInterval);
+        uiManager.showVerificationOverlay();
+    }
+}
+
+// 加载教程内容
+async function loadTutorialContent() {
+    try {
+        const tutorialResult = await api.getTutorialContent();
+        if (tutorialResult.success && tutorialResult.data) {
+            uiManager.updateTutorialContent(tutorialResult.data);
+
+            // 如果有账号信息，更新账号显示
+            if (tutorialResult.data.sections) {
+                const step2Section = tutorialResult.data.sections.find(s => s.id === 'step2');
+                if (step2Section && step2Section.accounts) {
+                    uiManager.updateAccounts(step2Section.accounts);
+                }
+            }
         }
-        currentSessionId = null;
-        sessionEndTime = null;
-
-        // 清理localStorage中的会话数据
-        localStorage.removeItem("sessionId");
-        localStorage.removeItem("sessionEndTime");
-
-        showVerificationOverlay();
+    } catch (error) {
+        console.error("加载教程内容失败:", error);
     }
 }
 
 // 事件监听器
-verificationElements.verificationForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const orderNumber = verificationElements.orderNumberInput.value.trim();
+function bindEvents() {
+    // 验证表单提交
+    if (verificationElements.verificationForm) {
+        verificationElements.verificationForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const orderNumber = verificationElements.orderNumberInput.value.trim();
 
-    if (!orderNumber) {
-        showError("请输入订单号");
-        return;
+            if (!orderNumber) {
+                uiManager.showMessage('error', "请输入订单号");
+                return;
+            }
+
+            await verifyOrder(orderNumber);
+        });
     }
 
-    showLoading(true);
-    hideMessages();
+    // 退出登录
+    if (verificationElements.logoutBtn) {
+        verificationElements.logoutBtn.addEventListener("click", logout);
+    }
 
-    await verifyOrder(orderNumber);
+    // 刷新会话
+    if (verificationElements.refreshSessionBtn) {
+        verificationElements.refreshSessionBtn.addEventListener("click", refreshSession);
+    }
 
-    showLoading(false);
-});
-
-verificationElements.logoutBtn.addEventListener("click", logout);
-verificationElements.refreshSessionBtn.addEventListener(
-    "click",
-    refreshSession
-);
-
-// 输入框焦点事件
-verificationElements.orderNumberInput.addEventListener("focus", hideMessages);
-verificationElements.orderNumberInput.addEventListener("input", hideMessages);
+    // 输入框焦点事件
+    if (verificationElements.orderNumberInput) {
+        verificationElements.orderNumberInput.addEventListener("focus", () => uiManager.hideMessages());
+        verificationElements.orderNumberInput.addEventListener("input", () => uiManager.hideMessages());
+    }
+}
 
 // 初始化验证系统
-function initVerificationSystem() {
-    console.log("🚀 初始化验证系统");
+async function initVerificationSystem() {
+    console.log("🚀 初始化前后端分离验证系统");
+
+    // 绑定事件
+    bindEvents();
 
     // 检查URL中是否有订单号参数
     const urlParams = new URLSearchParams(window.location.search);
@@ -530,13 +407,11 @@ function initVerificationSystem() {
         verificationElements.orderNumberInput.value = orderNumber.trim();
         // 延迟一点再自动验证，确保页面完全加载
         setTimeout(() => {
-            verificationElements.verificationForm.dispatchEvent(
-                new Event("submit")
-            );
+            verificationElements.verificationForm.dispatchEvent(new Event("submit"));
         }, 500);
     } else {
         // 检查会话状态
-        checkSessionStatus();
+        await checkSessionStatus();
     }
 }
 

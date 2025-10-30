@@ -16,6 +16,8 @@ const { rateLimiter } = require('./middleware/rateLimit');
 const verifyAPI = require('./api/verify');
 const multiAPI = require('./api/multi');
 const deviceAPI = require('./api/device');
+const tutorialAPI = require('./api/tutorial');
+const sessionAPI = require('./api/session');
 
 class OrderAccessServer {
   constructor() {
@@ -49,13 +51,6 @@ class OrderAccessServer {
     // 请求体解析
     this.app.use(express.json({ limit: '10kb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10kb' }));
-
-    // 静态文件服务 - 优先服务项目根目录的 public 文件夹
-    this.app.use(express.static(path.join(__dirname, '../../public')));
-
-    // 验证系统静态文件 (CSS/JS)
-    this.app.use('/css', express.static(path.join(__dirname, '../public/css')));
-    this.app.use('/js', express.static(path.join(__dirname, '../public/js')));
   }
 
   setupRoutes() {
@@ -63,26 +58,79 @@ class OrderAccessServer {
     this.app.use('/api/verify', verifyAPI);
     this.app.use('/api/multi', multiAPI);
     this.app.use('/api/device', deviceAPI);
+    this.app.use('/api/tutorial', tutorialAPI);
+    this.app.use('/api/session', sessionAPI);
 
-    // 主页路由 - 服务教程页面
-    this.app.get('/', (req, res) => {
-      res.sendFile(path.join(__dirname, '../../public/index.html'));
-    });
+    // 前后端分离 - 移除主页路由，主页由前端服务提供
 
-    // 健康检查端点
+    // 健康检查端点 - 增强版本提供系统信息
     this.app.get('/health', (req, res) => {
-      res.json({
+      const dbManager = require('../config/database');
+      const sessionManager = require('./middleware/session').sessionManager;
+
+      // 获取系统统计信息
+      const systemInfo = {
         status: 'ok',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        version: process.env.npm_package_version || '1.0.0',
+        environment: serverConfig.nodeEnv,
+        // 会话统计
+        sessions: {
+          active: sessionManager.getActiveSessionCount(),
+          maxAge: serverConfig.session.maxAge
+        },
+        // 数据库状态
+        database: {
+          status: 'connected',
+          path: process.env.DB_PATH || 'database/orders.db'
+        },
+        // API统计
+        api: {
+          endpoints: [
+            'POST /api/verify',
+            'GET /api/verify/status',
+            'POST /api/verify/refresh',
+            'POST /api/verify/logout',
+            'GET /api/tutorial/content',
+            'GET /api/tutorial/overview',
+            'GET /api/session/status',
+            'POST /api/session/extend',
+            'POST /api/multi/add',
+            'GET /api/multi/list',
+            'POST /api/device/set',
+            'GET /api/device/current'
+          ]
+        }
+      };
+
+      res.json(systemInfo);
+    });
+
+    // API 404处理 - 前后端分离版本
+    this.app.use('/api/*', (req, res) => {
+      res.status(404).json({
+        success: false,
+        message: 'API接口不存在',
+        path: req.path,
+        method: req.method
       });
     });
 
-    // 404处理
-    this.app.use('*', (req, res) => {
-      res.status(404).json({
-        success: false,
-        message: '接口不存在'
+    // 根路径重定向到API信息（用于测试）
+    this.app.get('/', (req, res) => {
+      res.json({
+        message: 'Order Access API Server - 前后端分离版本',
+        version: '1.0.0',
+        endpoints: {
+          health: '/health',
+          verification: '/api/verify',
+          tutorial: '/api/tutorial',
+          session: '/api/session',
+          multi: '/api/multi',
+          device: '/api/device'
+        },
+        documentation: '请查看API文档了解详细使用方法'
       });
     });
   }

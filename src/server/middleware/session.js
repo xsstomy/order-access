@@ -105,6 +105,41 @@ class SessionManager {
 
     return stats;
   }
+
+  // 获取活跃会话数量
+  getActiveSessionCount() {
+    return this.activeSessions.size;
+  }
+
+  // 获取所有会话
+  getAllSessions() {
+    const sessions = {};
+    for (const [sessionId, session] of this.activeSessions.entries()) {
+      sessions[sessionId] = { ...session };
+    }
+    return sessions;
+  }
+
+  // 获取会话统计信息
+  getSessionStats() {
+    const now = new Date();
+    const sessions = Array.from(this.activeSessions.values());
+
+    return {
+      totalActive: this.activeSessions.size,
+      totalCreated: sessions.length,
+      averageAge: sessions.length > 0
+        ? sessions.reduce((sum, session) => sum + (now - session.createdAt), 0) / sessions.length
+        : 0,
+      oldestSession: sessions.length > 0
+        ? Math.min(...sessions.map(s => s.createdAt.getTime()))
+        : null,
+      newestSession: sessions.length > 0
+        ? Math.max(...sessions.map(s => s.createdAt.getTime()))
+        : null,
+      sessionsByOrder: this.getOrderSessionStats()
+    };
+  }
 }
 
 // 创建全局会话管理器实例
