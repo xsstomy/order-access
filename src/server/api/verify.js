@@ -7,7 +7,7 @@ const router = express.Router();
 const orderOps = new OrderOperations();
 
 // 订单号验证正则表达式（根据实际需求调整）
-const ORDER_NUMBER_REGEX = /^[A-Za-z0-9]{8,30}$/;
+const ORDER_NUMBER_REGEX = /^[A-Za-z0-9]{6,30}$/;
 
 // 订单验证端点
 router.post('/', verifyRateLimiter, async (req, res) => {
@@ -156,6 +156,90 @@ router.get('/session', (req, res) => {
     return res.json({
       success: false,
       message: '会话验证失败'
+    });
+  }
+});
+
+// 会话状态检查端点 (为教程页面集成提供)
+router.get('/status', (req, res) => {
+  try {
+    const sessionId = req.headers['x-session-id'] || req.query.sessionId;
+    const clientIP = req.ip || req.connection.remoteAddress;
+
+    if (!sessionId) {
+      return res.json({
+        success: false,
+        valid: false,
+        message: '未提供会话ID'
+      });
+    }
+
+    if (!sessionManager.validateSession(sessionId, clientIP)) {
+      return res.json({
+        success: false,
+        valid: false,
+        message: '会话无效或已过期'
+      });
+    }
+
+    const session = sessionManager.getSession(sessionId);
+    const sessionExpiresAt = new Date(session.createdAt.getTime() + 2 * 60 * 60 * 1000); // 2小时
+
+    return res.json({
+      success: true,
+      valid: true,
+      sessionId: sessionId,
+      sessionExpiresAt: sessionExpiresAt.toISOString(),
+      orderNumber: session.orderNumber
+    });
+
+  } catch (error) {
+    console.error('会话状态检查错误:', error);
+    return res.json({
+      success: false,
+      valid: false,
+      message: '会话状态检查失败'
+    });
+  }
+});
+
+// 会话刷新端点 (为教程页面集成提供)
+router.post('/refresh', (req, res) => {
+  try {
+    const sessionId = req.headers['x-session-id'] || req.query.sessionId;
+    const clientIP = req.ip || req.connection.remoteAddress;
+
+    if (!sessionId) {
+      return res.json({
+        success: false,
+        message: '未提供会话ID'
+      });
+    }
+
+    if (!sessionManager.validateSession(sessionId, clientIP)) {
+      return res.json({
+        success: false,
+        message: '会话无效或已过期'
+      });
+    }
+
+    // 刷新会话访问时间
+    const session = sessionManager.getSession(sessionId);
+    session.lastAccessedAt = new Date();
+
+    const sessionExpiresAt = new Date(session.createdAt.getTime() + 2 * 60 * 60 * 1000); // 2小时
+
+    return res.json({
+      success: true,
+      message: '会话已刷新',
+      sessionExpiresAt: sessionExpiresAt.toISOString()
+    });
+
+  } catch (error) {
+    console.error('会话刷新错误:', error);
+    return res.json({
+      success: false,
+      message: '会话刷新失败'
     });
   }
 });

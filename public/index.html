@@ -5,11 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Apple ID 登录教程</title>
    <link rel="stylesheet" href="/style.css">
+   <link rel="stylesheet" href="/css/style.css">
  
 </head>
 <body>
-  <a id="overlay-link"  >
-  <div id="fullscreen-overlay">
+
+  <!-- 订单验证覆盖层 -->
+  <div id="verificationOverlay" class="verification-overlay" style="display: flex;">
+    <div class="verification-modal">
+      <div class="verification-header">
+        <h2>🔐 订单验证</h2>
+        <p>请输入您的订单号以访问教程内容</p>
+      </div>
+
+      <form id="verificationForm" class="verification-form">
+        <div class="form-group">
+          <label for="orderNumber" class="form-label">订单号</label>
+          <input
+            type="text"
+            id="orderNumber"
+            name="orderNumber"
+            class="form-input"
+            placeholder="请输入您的订单号"
+            required
+            autocomplete="off"
+          >
+          <div class="input-hint">订单号通常为8-30位字母和数字组合</div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">
+          <span class="btn-text">验证订单</span>
+          <span class="btn-loading" style="display: none;">验证中...</span>
+        </button>
+      </form>
+
+      <!-- 错误消息 -->
+      <div id="errorMessage" class="message error-message" style="display: none;">
+        <span class="message-icon">⚠️</span>
+        <span class="message-text"></span>
+      </div>
+
+      <!-- 成功消息 -->
+      <div id="successMessage" class="message success-message" style="display: none;">
+        <span class="message-icon">✅</span>
+        <span class="message-text"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 验证状态指示器 -->
+  <div id="verificationStatus" class="verification-status" style="display: none;">
+    <div class="status-content">
+      <span class="status-icon">✅</span>
+      <span class="status-text">已验证</span>
+      <span id="sessionTimer" class="session-timer"></span>
+      <button id="refreshSessionBtn" class="status-btn" title="刷新会话">🔄</button>
+      <button id="logoutBtn" class="status-btn" title="退出登录">🚪</button>
+    </div>
+  </div>
+
+  <div id="fullscreen-overlay" style="display: none;">
     <div class="overlay-content">
         <span class="highlight">更新</span>先按照第4步 <span class="highlight">保留数据卸载，然后 appstore 重新下载</span>
       <br />
@@ -19,13 +74,12 @@
       <button id="go-on-button">已知晓</button>
     </div>
   </div>
-</a>
-<div id="step-buttons" class="step-buttons hidden-buttons">
+<!-- <div id="step-buttons" class="step-buttons hidden-buttons">
   <a href="#step1">第 1 步</a>
   <a href="#step2">第 2 步</a>
   <a href="#step3">第 3 步</a>
   <a href="#step4">第 4 步</a>
-</div>
+</div> -->
 
   <div id="sticky-banner" style="display: none;">
      <div class="img-container-notice">
@@ -77,12 +131,12 @@
         <div class="copy-group">
           <strong>账号：</strong>
           <span id="account" style="display:none"></span>
-          <button class="copy-button" onclick="copyText('account')">点我复制账号</button>
+          <button class="copy-button" id="copyAccountBtn">点我复制账号</button>
         </div>
         <div class="copy-group">
           <strong>密码：</strong>
           <span id="password" style="display:none"></span>
-          <button class="copy-button" onclick="copyText('password')">点我复制密码</button>
+          <button class="copy-button" id="copyPasswordBtn">点我复制密码</button>
         </div>
         <p class="highlight">如果登录后 App Store 搜不到，先关闭 App Store 重新打开再搜。</p>
         <p class="highlight">如果还不行，请联系客服</p>
@@ -115,210 +169,6 @@
     </div>
   </div>
 
-  <script>
- // 判断是否 iOS WebKit（iPhone/iPad 上的 Safari/内嵌 WebView）
-  function isIOSWebKit() {
-    const ua = navigator.userAgent;
-    const isIOS = /iP(ad|hone|od)/.test(ua);
-    const isWebKit = /WebKit/.test(ua) && !/CriOS|FxiOS|OPiOS/.test(ua);
-    return isIOS && isWebKit;
-  }
-
-  // 回退到 execCommand(copy)
-  function fallbackCopy(text) {
-    // 用不可见 textarea，display:none 会导致无法选中，改用移出视口
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.setAttribute('readonly', '');
-    ta.style.position = 'fixed';
-    ta.style.top = '-1000px';
-    ta.style.left = '-1000px';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-
-    let ok = false;
-    try {
-      ta.select();
-      ta.setSelectionRange(0, ta.value.length); // iOS 需要
-      ok = document.execCommand('copy');
-    } catch (_) {
-      ok = false;
-    }
-    document.body.removeChild(ta);
-    return ok;
-  }
-
-  async function copyText(id) {
-    const el = document.getElementById(id);
-    const text = (el?.innerText || el?.textContent || '').trim();
-    if (!text) {
-      alert('没有可复制的内容');
-      showOverlay();
-      return;
-    }
-
-    // 1) 首选：安全上下文 + 可用 Clipboard API
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-        alert('已复制：' + text);
-        showOverlay();
-        return;
-      }
-    } catch (err) {
-      // 继续走回退
-    }
-
-    // 2) 回退：execCommand('copy')
-    try {
-      const ok = fallbackCopy(text);
-      if (ok) {
-        alert('已复制：' + text);
-        showOverlay();
-        return;
-      }
-    } catch (_) {
-      // 继续走最后兜底
-    }
-
-    // 3) 兜底：提示用户手动复制（对 iOS 体验更友好）
-    if (isIOSWebKit()) {
-      // iOS 上提供一个可编辑输入框以便长按选择
-      const input = document.createElement('input');
-      input.value = text;
-      input.readOnly = true;
-      input.style.position = 'fixed';
-      input.style.top = '-1000px';
-      input.style.left = '-1000px';
-      document.body.appendChild(input);
-      input.select();
-      input.setSelectionRange(0, input.value.length);
-      // 弹提示让用户长按粘贴
-      alert('复制失败，请长按输入框或使用系统选择操作进行复制：\n' + text);
-      document.body.removeChild(input);
-    } else {
-      // 非 iOS 用 prompt 兜底
-      window.prompt('复制失败，请使用 Ctrl/Cmd+C 复制以下内容：', text);
-    }
-
-    showOverlay();
-  }
-
-
-     let accounts = [
-         
-         {
-            "account":"bigt0ny0001@hotmail.com",
-            "password": "Bb334455@"
-        },
-        {
-            "account": "orlakocakp6893@hotmail.com",
-            "password": "Aa251019Ah"
-        }];
-  let currentIndex = 1;
-
-  // 加载账号配置
-//   fetch('./accounts.json')
-//     .then(res => res.json())
-//     .then(data => {
-//       accounts = data.data || [];
-      
-//       console.log(" currentIndex "+ data.currentIndex);
-      
-//       currentIndex = typeof data.currentIndex === 'number' ? data.currentIndex : 0;
-//       setAccount(currentIndex); // 默认显示 currentIndex 指定的账号
-//     });
-
-    setAccount(currentIndex);
-
-  // 根据索引设置账号和密码
-  function setAccount(index) {
-    if (!accounts.length) return;
-    if (typeof index !== 'number' || index < 0 || index >= accounts.length) {
-      index = 0;
-    }
-    document.getElementById('account').innerText = accounts[index].account;
-    document.getElementById('password').innerText = accounts[index].password;
-  }
-
- 
-  // window.addEventListener('scroll', function () {
-  //   const step2 = document.getElementById('step2');
-  //   const banner = document.getElementById('sticky-banner');
-
-  //   if (!step2 || !banner) return;
-
-  //   const rect = step2.getBoundingClientRect();
-
-  //   // 条件说明：
-  //   // 当 step2 的顶部在视口内（也就是已经滚动到第 2 步）
-  //   if (rect.top < window.innerHeight ) {
-  //     banner.style.display = 'block';
-  //   } else {
-  //     banner.style.display = 'none';
-  //   }
-  // });
-let overlayDismissed = false;
-
-function dismissOverlay() {
-  if (overlayDismissed) return;
-  overlayDismissed = true;
-
-  // 隐藏遮罩
-  const overlay = document.getElementById('fullscreen-overlay');
-  if (overlay) {
-    overlay.classList.add('hidden-overlay');
-  }
-
-  // 显示步骤按钮
-  const buttons = document.getElementById('step-buttons');
-  if (buttons) {
-    buttons.classList.remove('hidden-buttons');
-  }
-}
-
-// 显示遮罩
-function showOverlay() {
-    
-    
-  // 显示遮罩
-  const overlay = document.getElementById('fullscreen-overlay');
-  if (overlay) {
-    overlay.classList.remove('hidden-overlay');
-  }
-
-  // 隐藏右上角按钮（可选）
-  const buttons = document.getElementById('step-buttons');
-  if (buttons) {
-    buttons.classList.add('hidden-buttons');
-  }
-
-  // 标记为未关闭
-  overlayDismissed = false;
-}
-
-
-// 点击遮罩时隐藏
-document.getElementById('go-on-button').addEventListener('click', dismissOverlay);
-
-dismissOverlay();
-
-// 延迟一段时间再绑定 scroll 监听器，防止锚点跳转误触发
-// setTimeout(() => {
-//   let hasScrolled = false;
-//   window.addEventListener('scroll', function onScroll() {
-//     if (overlayDismissed || hasScrolled) return;
-//     hasScrolled = true;
-
-//     // 真正用户滑动之后再触发遮罩隐藏
-//     dismissOverlay();
-
-//     // 可选：移除监听器（只触发一次）
-//     window.removeEventListener('scroll', onScroll);
-//   });
-// }, 1000); // 延迟 1 秒钟再绑定 scroll
-
-
-  </script>
+  <script src="/main.js"></script>
 </body>
 </html>

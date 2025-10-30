@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apple ID 登录教程</title>
+   <link rel="stylesheet" href="/style.css">
+ 
+</head>
+<body>
+  <a id="overlay-link"  >
+  <div id="fullscreen-overlay">
+    <div class="overlay-content">
+        <span class="highlight">更新</span>先按照第4步 <span class="highlight">保留数据卸载，然后 appstore 重新下载</span>
+      <br />
+        下载操作步骤 <span class="highlight">123</span> 看起即可！
+      <br />
+      <br />
+      <button id="go-on-button">已知晓</button>
+    </div>
+  </div>
+</a>
+<div id="step-buttons" class="step-buttons hidden-buttons">
+  <a href="#step1">第 1 步</a>
+  <a href="#step2">第 2 步</a>
+  <a href="#step3">第 3 步</a>
+  <a href="#step4">第 4 步</a>
+</div>
+
+  <div id="sticky-banner" style="display: none;">
+     <div class="img-container-notice">
+          <img src="./textimage/questions1.png" alt="问题" />
+        </div>
+  ⚠️ 出现“已禁用”，“不在提供”，“已锁定”？<a href="#step4">立刻查看第 4 步解决方法</a>
+</div>
+
+  <div class="container">
+    <div class="warning">
+      <p>教程一共<strong class="highlight"> 4 </strong>步请认真看完，向下滑动即可查看所有内容。</p>
+      <p><strong class="highlight">账号在最下方！！</strong> 请耐心看完教程！！</p>
+      <p class="highlight">只登录appstore下载安装，不涉及任何隐私和安全问题，请放心使用</p>
+      <div class="img-container">
+        <img src="./textimage/step0.png" alt="第一步截图" />
+      </div>
+      <p><strong>✅ 请在 App Store 使用</strong>，<strong>❌❌严禁在设置和icould登录此id，严禁用此id充值/改地区。</strong>否则出现问题概不负责。</p>
+    </div>
+    
+    <div class="step" id="step1">
+      <h2>第 1 步：<ne-text id="ua53b45ae" ne-bg-color="#DF2A3F" ne-fontsize="22" ne-emoji="true" style="color: rgb(38, 38, 38); background-color: rgb(223, 42, 63);">⬇️</ne-text>退出账号</h2>
+      <div class="img-container">
+        <img src="./textimage/step1.PNG" alt="第二步截图" />
+      </div>
+      <p>打开 App Store，点击右上角头像，<span class="highlight">滑到底部找到“退出登录”</span>。</p>
+    </div>
+
+    <div class="step" id="step2">
+      <h2>第 2 步：<ne-text id="ua53b45ae" ne-bg-color="#DF2A3F" ne-fontsize="22" ne-emoji="true" style="color: rgb(38, 38, 38); background-color: rgb(223, 42, 63);">⬇️</ne-text>登录账号，下载应用</h2>
+      <div class="img-container">
+        <img src="./textimage/step2.PNG" alt="第三步截图" />
+      </div>
+      <p>点击“通过 Apple ID 登录” → 点击不是 → 输入账号 → 点击“继续输入密码”。<span class="highlight">继续下滑可以看到点我复制账号和密码</span></p>
+      <p class="highlight">如果你的设备不是如上图这样的，那么输入账号和密码，点击登录，不要点完成</p>
+      <!--  <div class="img-container">-->
+      <!--  <img src="./textimage/oldsystem1.png" alt="旧系统" />-->
+      <!--</div>-->
+      <!--<p class="highlight">如果你的账号登录如上图，那么输入账号和密码，点击登录，不要点完成</p>-->
+      <div class="account-box" >
+        <!--<p class="highlight" >更新遇到下面的问题，请下滑查看第 3 步</p>-->
+        <!--<div class="img-container">-->
+        <!--  <img src="./textimage/questions.png" alt="问题" />-->
+        <!--</div>-->
+        <p>登录之后苹果商店，<strong class="highlight">跟你平时下载软件一样</strong>，输入 <strong class="highlight">你要下载的软件名字</strong>，即可下载</p>
+      <!--        <div class="img-container">-->
+      <!--  <img src="./textimage/downloadapp.gif" alt="下载app" />-->
+      <!--</div>-->
+
+        <div class="copy-group">
+          <strong>账号：</strong>
+          <span id="account" style="display:none"></span>
+          <button class="copy-button" onclick="copyText('account')">点我复制账号</button>
+        </div>
+        <div class="copy-group">
+          <strong>密码：</strong>
+          <span id="password" style="display:none"></span>
+          <button class="copy-button" onclick="copyText('password')">点我复制密码</button>
+        </div>
+        <p class="highlight">如果登录后 App Store 搜不到，先关闭 App Store 重新打开再搜。</p>
+        <p class="highlight">如果还不行，请联系客服</p>
+        
+      </div>
+    </div>
+   
+    <div class="step" id="step3">
+      <h2>第 3 步：登录回自己的账号</h2>
+      <div class="img-container">
+        <img src="./textimage/backselfaccount.png" alt="第三步截图" />
+      </div>
+      <p>点击 “appstore” → 点击右上角“账号” →下滑到底部，点击“退出登录” → 滑到顶部，点击“通过 apple 账户登录”  → 点击“继续”。</p>
+      <p>按照上面的路径操作即可登录回你自己的账号，<strong class="highlight">退出我的账号不影响应用使用</strong></p>
+
+      <div class="final-tip">
+        📌 下载后请立即退出账号！！<br />
+        📌 下载后请立即退出账号！！
+      </div>
+    </div>
+     <div class="step"  id="step4">
+      <h2>第 4 步：<ne-text id="ua53b45ae" ne-bg-color="#DF2A3F" ne-fontsize="22" ne-emoji="true" style="color: rgb(38, 38, 38); background-color: rgb(223, 42, 63);">⬇️</ne-text>遇到无法更新的情况，执行第 4步</h2>
+      <div class="img-container">
+        <img src="./textimage/delete.png" alt="第一步截图" />
+      </div>
+      <p>点击“设置” → 通用 →点击 “iPhone存储空间” → 找到<span class="highlight">“要更新的应用或游戏”</span> → 卸载 app</p>
+      <p class="highlight">下载时不需要操作这一步，仅在无法更新时再来执行。</p>
+      <!--<p>因为换账号了，所以需要根据上面的教程来<span class="highlight">保留数据更新</span>，先卸载，然后在 appstore 重新下载。</p>-->
+
+    </div>
+  </div>
+
+  <script>
+ // 判断是否 iOS WebKit（iPhone/iPad 上的 Safari/内嵌 WebView）
+  function isIOSWebKit() {
+    const ua = navigator.userAgent;
+    const isIOS = /iP(ad|hone|od)/.test(ua);
+    const isWebKit = /WebKit/.test(ua) && !/CriOS|FxiOS|OPiOS/.test(ua);
+    return isIOS && isWebKit;
+  }
+
+  // 回退到 execCommand(copy)
+  function fallbackCopy(text) {
+    // 用不可见 textarea，display:none 会导致无法选中，改用移出视口
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    ta.style.left = '-1000px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+
+    let ok = false;
+    try {
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length); // iOS 需要
+      ok = document.execCommand('copy');
+    } catch (_) {
+      ok = false;
+    }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  async function copyText(id) {
+    const el = document.getElementById(id);
+    const text = (el?.innerText || el?.textContent || '').trim();
+    if (!text) {
+      alert('没有可复制的内容');
+      showOverlay();
+      return;
+    }
+
+    // 1) 首选：安全上下文 + 可用 Clipboard API
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        alert('已复制：' + text);
+        showOverlay();
+        return;
+      }
+    } catch (err) {
+      // 继续走回退
+    }
+
+    // 2) 回退：execCommand('copy')
+    try {
+      const ok = fallbackCopy(text);
+      if (ok) {
+        alert('已复制：' + text);
+        showOverlay();
+        return;
+      }
+    } catch (_) {
+      // 继续走最后兜底
+    }
+
+    // 3) 兜底：提示用户手动复制（对 iOS 体验更友好）
+    if (isIOSWebKit()) {
+      // iOS 上提供一个可编辑输入框以便长按选择
+      const input = document.createElement('input');
+      input.value = text;
+      input.readOnly = true;
+      input.style.position = 'fixed';
+      input.style.top = '-1000px';
+      input.style.left = '-1000px';
+      document.body.appendChild(input);
+      input.select();
+      input.setSelectionRange(0, input.value.length);
+      // 弹提示让用户长按粘贴
+      alert('复制失败，请长按输入框或使用系统选择操作进行复制：\n' + text);
+      document.body.removeChild(input);
+    } else {
+      // 非 iOS 用 prompt 兜底
+      window.prompt('复制失败，请使用 Ctrl/Cmd+C 复制以下内容：', text);
+    }
+
+    showOverlay();
+  }
+
+
+     let accounts = [
+         
+         {
+            "account":"bigt0ny0001@hotmail.com",
+            "password": "Bb334455@"
+        },
+        {
+            "account": "orlakocakp6893@hotmail.com",
+            "password": "Aa251019Ah"
+        }];
+  let currentIndex = 1;
+
+  // 加载账号配置
+//   fetch('./accounts.json')
+//     .then(res => res.json())
+//     .then(data => {
+//       accounts = data.data || [];
+      
+//       console.log(" currentIndex "+ data.currentIndex);
+      
+//       currentIndex = typeof data.currentIndex === 'number' ? data.currentIndex : 0;
+//       setAccount(currentIndex); // 默认显示 currentIndex 指定的账号
+//     });
+
+    setAccount(currentIndex);
+
+  // 根据索引设置账号和密码
+  function setAccount(index) {
+    if (!accounts.length) return;
+    if (typeof index !== 'number' || index < 0 || index >= accounts.length) {
+      index = 0;
+    }
+    document.getElementById('account').innerText = accounts[index].account;
+    document.getElementById('password').innerText = accounts[index].password;
+  }
+
+ 
+  // window.addEventListener('scroll', function () {
+  //   const step2 = document.getElementById('step2');
+  //   const banner = document.getElementById('sticky-banner');
+
+  //   if (!step2 || !banner) return;
+
+  //   const rect = step2.getBoundingClientRect();
+
+  //   // 条件说明：
+  //   // 当 step2 的顶部在视口内（也就是已经滚动到第 2 步）
+  //   if (rect.top < window.innerHeight ) {
+  //     banner.style.display = 'block';
+  //   } else {
+  //     banner.style.display = 'none';
+  //   }
+  // });
+let overlayDismissed = false;
+
+function dismissOverlay() {
+  if (overlayDismissed) return;
+  overlayDismissed = true;
+
+  // 隐藏遮罩
+  const overlay = document.getElementById('fullscreen-overlay');
+  if (overlay) {
+    overlay.classList.add('hidden-overlay');
+  }
+
+  // 显示步骤按钮
+  const buttons = document.getElementById('step-buttons');
+  if (buttons) {
+    buttons.classList.remove('hidden-buttons');
+  }
+}
+
+// 显示遮罩
+function showOverlay() {
+    
+    
+  // 显示遮罩
+  const overlay = document.getElementById('fullscreen-overlay');
+  if (overlay) {
+    overlay.classList.remove('hidden-overlay');
+  }
+
+  // 隐藏右上角按钮（可选）
+  const buttons = document.getElementById('step-buttons');
+  if (buttons) {
+    buttons.classList.add('hidden-buttons');
+  }
+
+  // 标记为未关闭
+  overlayDismissed = false;
+}
+
+
+// 点击遮罩时隐藏
+document.getElementById('go-on-button').addEventListener('click', dismissOverlay);
+
+dismissOverlay();
+
+// 延迟一段时间再绑定 scroll 监听器，防止锚点跳转误触发
+// setTimeout(() => {
+//   let hasScrolled = false;
+//   window.addEventListener('scroll', function onScroll() {
+//     if (overlayDismissed || hasScrolled) return;
+//     hasScrolled = true;
+
+//     // 真正用户滑动之后再触发遮罩隐藏
+//     dismissOverlay();
+
+//     // 可选：移除监听器（只触发一次）
+//     window.removeEventListener('scroll', onScroll);
+//   });
+// }, 1000); // 延迟 1 秒钟再绑定 scroll
+
+
+  </script>
+</body>
+</html>

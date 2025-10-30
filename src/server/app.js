@@ -45,8 +45,12 @@ class OrderAccessServer {
     this.app.use(express.json({ limit: '10kb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-    // 静态文件服务
-    this.app.use(express.static(path.join(__dirname, '../public')));
+    // 静态文件服务 - 优先服务项目根目录的 public 文件夹
+    this.app.use(express.static(path.join(__dirname, '../../public')));
+
+    // 验证系统静态文件 (CSS/JS)
+    this.app.use('/css', express.static(path.join(__dirname, '../public/css')));
+    this.app.use('/js', express.static(path.join(__dirname, '../public/js')));
   }
 
   setupRoutes() {
@@ -54,9 +58,9 @@ class OrderAccessServer {
     this.app.use('/api/verify', verifyAPI);
     this.app.use('/api/multi', multiAPI);
 
-    // 主页路由
+    // 主页路由 - 服务教程页面
     this.app.get('/', (req, res) => {
-      res.sendFile(path.join(__dirname, '../public/index.html'));
+      res.sendFile(path.join(__dirname, '../../public/index.html'));
     });
 
     // 健康检查端点
