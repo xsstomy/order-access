@@ -15,6 +15,18 @@ async function initializeDatabase() {
       )
     `);
 
+    // 创建设备绑定表
+    await dbManager.run(`
+      CREATE TABLE IF NOT EXISTS device_bindings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_number TEXT NOT NULL,
+        device_id TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_accessed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(order_number, device_id)
+      )
+    `);
+
     // 创建订单使用记录表
     await dbManager.run(`
       CREATE TABLE IF NOT EXISTS order_usage (
@@ -22,6 +34,7 @@ async function initializeDatabase() {
         order_number TEXT NOT NULL,
         ip_address TEXT NOT NULL,
         user_agent TEXT,
+        device_id TEXT,
         accessed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         session_id TEXT
       )
@@ -38,6 +51,18 @@ async function initializeDatabase() {
 
     await dbManager.run(`
       CREATE INDEX IF NOT EXISTS idx_order_usage_session_id ON order_usage(session_id)
+    `);
+
+    await dbManager.run(`
+      CREATE INDEX IF NOT EXISTS idx_device_bindings_order_number ON device_bindings(order_number)
+    `);
+
+    await dbManager.run(`
+      CREATE INDEX IF NOT EXISTS idx_device_bindings_device_id ON device_bindings(device_id)
+    `);
+
+    await dbManager.run(`
+      CREATE INDEX IF NOT EXISTS idx_order_usage_device_id ON order_usage(device_id)
     `);
 
     console.log('数据库初始化完成');

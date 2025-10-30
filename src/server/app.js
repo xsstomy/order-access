@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 require('dotenv').config();
 
@@ -14,6 +15,7 @@ const { rateLimiter } = require('./middleware/rateLimit');
 // 导入 API 路由
 const verifyAPI = require('./api/verify');
 const multiAPI = require('./api/multi');
+const deviceAPI = require('./api/device');
 
 class OrderAccessServer {
   constructor() {
@@ -38,6 +40,9 @@ class OrderAccessServer {
     // 限流中间件
     this.app.use(rateLimiter);
 
+    // Cookie解析（设备ID管理需要）
+    this.app.use(cookieParser());
+
     // 会话管理
     this.app.use(cookieSession(serverConfig.session));
 
@@ -57,6 +62,7 @@ class OrderAccessServer {
     // API 路由
     this.app.use('/api/verify', verifyAPI);
     this.app.use('/api/multi', multiAPI);
+    this.app.use('/api/device', deviceAPI);
 
     // 主页路由 - 服务教程页面
     this.app.get('/', (req, res) => {

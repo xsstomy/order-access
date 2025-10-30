@@ -1,20 +1,25 @@
 const express = require('express');
 const OrderOperations = require('../db/operations');
+const DeviceOperations = require('../db/deviceOperations');
 const { sessionManager } = require('../middleware/session');
 const { verifyRateLimiter } = require('../middleware/rateLimit');
+const DeviceIdMiddleware = require('../middleware/deviceId');
 
 const router = express.Router();
 const orderOps = new OrderOperations();
+const deviceOps = new DeviceOperations();
+const deviceMiddleware = new DeviceIdMiddleware();
 
 // 订单号验证正则表达式（根据实际需求调整）
 const ORDER_NUMBER_REGEX = /^[A-Za-z0-9]{6,30}$/;
 
 // 订单验证端点
-router.post('/', verifyRateLimiter, async (req, res) => {
+router.post('/', verifyRateLimiter, deviceMiddleware.getDeviceId(), async (req, res) => {
   try {
     const { orderNumber } = req.body;
     const clientIP = req.ip || req.connection.remoteAddress;
     const userAgent = req.headers['user-agent'] || '';
+    let deviceId = req.deviceId;
 
     // 输入验证
     if (!orderNumber) {
@@ -31,6 +36,17 @@ router.post('/', verifyRateLimiter, async (req, res) => {
         success: false,
         message: '验证失败，请稍后再试或联系客服'
       });
+    }
+
+    // 设备ID验证（必须有设备ID才能继续）
+    if (!deviceId) {
+      console.warn(`缺少设备ID: ${orderNumber}, IP: ${clientIP}`);
+
+      // 如果没有设备ID，生成一个新的
+      deviceId = deviceMiddleware.generateDeviceId();
+      deviceMiddleware.setCookie(res, deviceId);
+
+      console.log(`生成新设备ID: ${deviceId.substring(0, 8)}..., IP: ${clientIP}`);
     }
 
     // 检查是否已有有效会话
@@ -50,35 +66,96 @@ router.post('/', verifyRateLimiter, async (req, res) => {
     const orderInfo = await orderOps.checkOrder(orderNumber);
 
     if (!orderInfo.exists) {
-      console.warn(`订单不存在: ${orderNumber}, IP: ${clientIP}`);
+      console.warn(`订单不存在: ${orderNumber}, IP: ${clientIP}, Device: ${deviceId.substring(0, 8)}...`);
       return res.json({
         success: false,
         message: '验证失败，请稍后再试或联系客服'
       });
     }
 
+    // 验证设备访问权限
+    const deviceValidation = await deviceOps.validateDeviceAccess(orderNumber, deviceId);
+
+    if (!deviceValidation.allowed) {
+      console.warn(`设备访问被拒绝: ${orderNumber}, IP: ${clientIP}, Device: ${deviceId.substring(0, 8)}..., Reason: ${deviceValidation.reason}`);
+
+      let message = '验证失败，请稍后再试或联系客服';
+
+      if (deviceValidation.reason === 'device_limit_exceeded') {
+        message = `该订单已在${deviceValidation.currentCount}个设备上验证，最多支持${deviceValidation.maxDevices}个设备`;
+      }
+
+      return res.json({
+        success: false,
+        message,
+        deviceLimit: deviceValidation.reason === 'device_limit_exceeded' ? {
+          current: deviceValidation.currentCount,
+          max: deviceValidation.maxDevices
+        } : null
+      });
+    }
+
     // 处理单次订单
     if (orderInfo.type === 'single') {
       if (orderInfo.used) {
-        console.warn(`单次订单已使用: ${orderNumber}, IP: ${clientIP}`);
+        let message = '验证失败，请稍后再试或联系客服';
+
+        if (orderInfo.reason === 'expired_24h') {
+          message = '该订单已超过24小时访问期限，请联系客服';
+          console.warn(`单次订单24小时窗口期已过期: ${orderNumber}, IP: ${clientIP}, 过期时间: ${orderInfo.expiredAt}`);
+        } else {
+          console.warn(`单次订单已使用: ${orderNumber}, IP: ${clientIP}`);
+        }
+
         return res.json({
           success: false,
-          message: '验证失败，请稍后再试或联系客服'
+          message,
+          reason: orderInfo.reason || 'used'
         });
       }
 
-      // 记录使用情况（原子操作）
-      await orderOps.recordOrderUsage(orderNumber, clientIP, userAgent, null);
+      // 如果订单没有24小时访问窗口期，创建一个
+      let windowInfo = null;
+      if (!orderInfo.hasAccessWindow) {
+        windowInfo = await orderOps.create24HourAccessWindow(orderNumber);
+      } else {
+        windowInfo = {
+          expiresAt: orderInfo.windowExpiresAt
+        };
+      }
+
+      // 记录使用情况（原子操作，包含设备ID）
+      await orderOps.recordOrderUsage(orderNumber, clientIP, userAgent, null, deviceId);
+
+      // 创建设备绑定（如果是新设备）
+      if (deviceValidation.reason === 'new_device_allowed') {
+        await deviceOps.createDeviceBinding(orderNumber, deviceId);
+      }
 
       // 创建会话
       const sessionId = sessionManager.createSession(orderNumber, clientIP);
 
-      console.log(`单次订单验证成功: ${orderNumber}, IP: ${clientIP}, 会话: ${sessionId}`);
-      return res.json({
+      console.log(`单次订单验证成功: ${orderNumber}, IP: ${clientIP}, Device: ${deviceId.substring(0, 8)}..., 会话: ${sessionId}`);
+
+      const response = {
         success: true,
         sessionId,
-        message: '验证成功'
-      });
+        message: '验证成功',
+        deviceInfo: deviceValidation.reason === 'new_device_allowed' ? {
+          isNewDevice: true,
+          remainingDevices: deviceValidation.remainingDevices
+        } : null
+      };
+
+      // 如果有24小时窗口期信息，添加到响应中
+      if (windowInfo && windowInfo.expiresAt) {
+        response.accessWindow = {
+          expiresAt: windowInfo.expiresAt,
+          remainingHours: Math.max(0, (new Date(windowInfo.expiresAt) - new Date()) / (1000 * 60 * 60))
+        };
+      }
+
+      return res.json(response);
     }
 
     // 处理多次订单
@@ -93,16 +170,27 @@ router.post('/', verifyRateLimiter, async (req, res) => {
         });
       }
 
-      // 记录使用情况
+      // 记录使用情况（包含设备ID）
       const sessionId = sessionManager.createSession(orderNumber, clientIP);
-      await orderOps.recordOrderUsage(orderNumber, clientIP, userAgent, sessionId);
+      await orderOps.recordOrderUsage(orderNumber, clientIP, userAgent, sessionId, deviceId);
 
-      console.log(`多次订单验证成功: ${orderNumber}, IP: ${clientIP}, 剩余次数: ${remainingAccess}, 会话: ${sessionId}`);
+      // 创建设备绑定（如果是新设备）
+      let deviceInfo = null;
+      if (deviceValidation.reason === 'new_device_allowed') {
+        const bindingResult = await deviceOps.createDeviceBinding(orderNumber, deviceId);
+        deviceInfo = {
+          isNewDevice: true,
+          remainingDevices: bindingResult.remainingDevices
+        };
+      }
+
+      console.log(`多次订单验证成功: ${orderNumber}, IP: ${clientIP}, Device: ${deviceId.substring(0, 8)}..., 剩余次数: ${remainingAccess}, 会话: ${sessionId}`);
       return res.json({
         success: true,
         sessionId,
         message: '验证成功',
-        remainingAccess: remainingAccess === Infinity ? -1 : remainingAccess - 1 // -1表示无限
+        remainingAccess: remainingAccess === Infinity ? -1 : remainingAccess - 1, // -1表示无限
+        deviceInfo
       });
     }
 
@@ -263,6 +351,77 @@ router.post('/logout', (req, res) => {
     return res.json({
       success: false,
       message: '退出失败'
+    });
+  }
+});
+
+// 检查24小时访问窗口期状态
+router.get('/window/:orderNumber', async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+    const clientIP = req.ip || req.connection.remoteAddress;
+
+    // 输入验证
+    if (!orderNumber || !ORDER_NUMBER_REGEX.test(orderNumber)) {
+      return res.json({
+        success: false,
+        message: '无效的订单号格式'
+      });
+    }
+
+    // 检查订单信息
+    const orderInfo = await orderOps.checkOrder(orderNumber);
+
+    if (!orderInfo.exists) {
+      return res.json({
+        success: false,
+        message: '订单不存在'
+      });
+    }
+
+    // 只有单次订单才有24小时窗口期
+    if (orderInfo.type !== 'single') {
+      return res.json({
+        success: false,
+        message: '该订单类型不支持24小时访问窗口期'
+      });
+    }
+
+    // 检查24小时窗口期状态
+    const windowStatus = await orderOps.check24HourAccessWindow(orderNumber);
+
+    return res.json({
+      success: true,
+      orderNumber,
+      orderType: orderInfo.type,
+      windowStatus
+    });
+
+  } catch (error) {
+    console.error('检查访问窗口期错误:', error);
+    return res.json({
+      success: false,
+      message: '检查访问窗口期失败'
+    });
+  }
+});
+
+// 清理过期的访问窗口期（管理员接口）
+router.post('/cleanup', async (req, res) => {
+  try {
+    const cleanedCount = await orderOps.cleanupExpiredAccessWindows();
+
+    return res.json({
+      success: true,
+      message: `清理了 ${cleanedCount} 个过期的访问窗口期`,
+      cleanedCount
+    });
+
+  } catch (error) {
+    console.error('清理过期访问窗口期错误:', error);
+    return res.json({
+      success: false,
+      message: '清理过期访问窗口期失败'
     });
   }
 });
