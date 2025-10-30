@@ -314,6 +314,11 @@ async function verifyOrder(orderNumber) {
         if (result.success) {
             currentSessionId = result.sessionId;
             sessionEndTime = new Date(result.sessionExpiresAt);
+
+            // 保存sessionId到localStorage
+            localStorage.setItem("sessionId", currentSessionId);
+            localStorage.setItem("sessionEndTime", sessionEndTime.toISOString());
+
             showSuccess("验证成功！正在跳转...");
 
             setTimeout(() => {
@@ -380,7 +385,27 @@ function handleSessionExpired() {
 // 检查会话状态
 async function checkSessionStatus() {
     try {
-        const response = await fetch("/api/verify/status", {
+        // 从localStorage获取保存的sessionId
+        const savedSessionId = localStorage.getItem("sessionId");
+        const savedSessionEndTime = localStorage.getItem("sessionEndTime");
+
+        if (!savedSessionId || !savedSessionEndTime) {
+            showVerificationOverlay();
+            return;
+        }
+
+        // 检查本地保存的会话时间是否已过期
+        const endTime = new Date(savedSessionEndTime);
+        if (new Date() >= endTime) {
+            // 清理过期的会话数据
+            localStorage.removeItem("sessionId");
+            localStorage.removeItem("sessionEndTime");
+            showVerificationOverlay();
+            return;
+        }
+
+        // 向服务器验证会话状态
+        const response = await fetch(`/api/verify/status?sessionId=${encodeURIComponent(savedSessionId)}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -392,10 +417,17 @@ async function checkSessionStatus() {
         if (result.success && result.valid) {
             currentSessionId = result.sessionId;
             sessionEndTime = new Date(result.sessionExpiresAt);
+
+            // 更新localStorage中的会话时间
+            localStorage.setItem("sessionEndTime", sessionEndTime.toISOString());
+
             hideVerificationOverlay();
             startSessionTimer();
             dismissOverlay(); // 关闭教程提示覆盖层
         } else {
+            // 清理无效的会话数据
+            localStorage.removeItem("sessionId");
+            localStorage.removeItem("sessionEndTime");
             showVerificationOverlay();
         }
     } catch (error) {
@@ -432,11 +464,13 @@ async function refreshSession() {
 // 退出登录
 async function logout() {
     try {
-        await fetch("/api/verify/logout", {
+        const savedSessionId = localStorage.getItem("sessionId");
+        const response = await fetch("/api/verify/logout", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
+            body: JSON.stringify({ sessionId: savedSessionId }),
         });
     } catch (error) {
         console.error("退出登录失败:", error);
@@ -446,6 +480,11 @@ async function logout() {
         }
         currentSessionId = null;
         sessionEndTime = null;
+
+        // 清理localStorage中的会话数据
+        localStorage.removeItem("sessionId");
+        localStorage.removeItem("sessionEndTime");
+
         showVerificationOverlay();
     }
 }

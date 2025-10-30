@@ -14,6 +14,38 @@ class OrderOperations {
       `, [orderNumber]);
 
       if (multiOrder) {
+        // 检查多次订单是否有24小时访问窗口期
+        const accessWindow = await dbManager.get(`
+          SELECT first_accessed_at, expires_at FROM order_access_windows
+          WHERE order_number = ? AND order_type = 'multi'
+        `, [orderNumber]);
+
+        if (accessWindow) {
+          const now = new Date();
+          const expiresAt = new Date(accessWindow.expires_at);
+
+          if (now > expiresAt) {
+            // 24小时窗口期已过
+            return {
+              exists: true,
+              type: 'multi',
+              maxAccess: multiOrder.max_access,
+              windowExpired: true,
+              expiredAt: accessWindow.expires_at
+            };
+          } else {
+            // 24小时窗口期内，可以访问
+            return {
+              exists: true,
+              type: 'multi',
+              maxAccess: multiOrder.max_access,
+              hasAccessWindow: true,
+              windowExpiresAt: accessWindow.expires_at
+            };
+          }
+        }
+
+        // 没有窗口期的多次订单
         return {
           exists: true,
           type: 'multi',
@@ -23,8 +55,8 @@ class OrderOperations {
 
       // 检查单次订单的24小时访问窗口期
       const accessWindow = await dbManager.get(`
-        SELECT first_accessed_at, expires_at FROM single_order_access_windows
-        WHERE order_number = ?
+        SELECT first_accessed_at, expires_at FROM order_access_windows
+        WHERE order_number = ? AND order_type = 'single'
       `, [orderNumber]);
 
       if (accessWindow) {
@@ -182,23 +214,24 @@ class OrderOperations {
     }
   }
 
-  // 创建24小时访问窗口期（用于单次订单）
-  async create24HourAccessWindow(orderNumber) {
+  // 创建24小时访问窗口期（用于单次或多次订单）
+  async create24HourAccessWindow(orderNumber, orderType = 'single') {
     try {
       const now = new Date();
       const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24小时后
 
       const result = await dbManager.run(`
-        INSERT OR REPLACE INTO single_order_access_windows
-        (order_number, first_accessed_at, expires_at)
-        VALUES (?, ?, ?)
-      `, [orderNumber, now.toISOString(), expiresAt.toISOString()]);
+        INSERT OR REPLACE INTO order_access_windows
+        (order_number, first_accessed_at, expires_at, order_type)
+        VALUES (?, ?, ?, ?)
+      `, [orderNumber, now.toISOString(), expiresAt.toISOString(), orderType]);
 
-      console.log(`创建24小时访问窗口期: ${orderNumber}, 过期时间: ${expiresAt.toISOString()}`);
+      console.log(`创建24小时访问窗口期: ${orderNumber} (${orderType}), 过期时间: ${expiresAt.toISOString()}`);
       return {
         success: true,
         expiresAt: expiresAt.toISOString(),
-        windowId: result.lastID
+        windowId: result.lastID,
+        orderType
       };
     } catch (error) {
       console.error('创建24小时访问窗口期失败:', error.message);
@@ -207,12 +240,21 @@ class OrderOperations {
   }
 
   // 检查24小时访问窗口期状态
-  async check24HourAccessWindow(orderNumber) {
+  async check24HourAccessWindow(orderNumber, orderType = null) {
     try {
-      const window = await dbManager.get(`
-        SELECT first_accessed_at, expires_at FROM single_order_access_windows
+      let query = `
+        SELECT first_accessed_at, expires_at, order_type FROM order_access_windows
         WHERE order_number = ?
-      `, [orderNumber]);
+      `;
+      let params = [orderNumber];
+
+      // 如果指定了订单类型，添加类型过滤
+      if (orderType) {
+        query += ' AND order_type = ?';
+        params.push(orderType);
+      }
+
+      const window = await dbManager.get(query, params);
 
       if (!window) {
         return { hasWindow: false };
@@ -226,6 +268,7 @@ class OrderOperations {
         hasWindow: true,
         firstAccessedAt: firstAccessedAt.toISOString(),
         expiresAt: expiresAt.toISOString(),
+        orderType: window.order_type,
         isExpired: now > expiresAt,
         remainingHours: Math.max(0, (expiresAt - now) / (1000 * 60 * 60))
       };
@@ -241,7 +284,7 @@ class OrderOperations {
       const now = new Date().toISOString();
 
       const result = await dbManager.run(`
-        DELETE FROM single_order_access_windows
+        DELETE FROM order_access_windows
         WHERE expires_at < ?
       `, [now]);
 

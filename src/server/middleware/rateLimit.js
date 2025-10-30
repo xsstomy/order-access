@@ -20,7 +20,12 @@ const baseRateLimiter = rateLimit({
   // 自定义跳过逻辑
   skip: (req) => {
     // 跳过静态文件和健康检查
-    if (req.path === '/health' || req.path.startsWith('/css/') || req.path.startsWith('/js/')) {
+    if (req.path === '/health' ||
+        req.path.startsWith('/css/') ||
+        req.path.startsWith('/js/') ||
+        req.path.startsWith('/images/') ||
+        req.path.startsWith('/textimage/') ||
+        req.path.includes('.')) { // 跳过所有包含文件扩展名的请求
       return true;
     }
     return false;
