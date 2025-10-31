@@ -264,21 +264,20 @@ class MultiOrderVerification {
 
             if (result.success && result.authenticated && result.data) {
                 uiManager.hideVerificationOverlay();
+                // 立即更新会话状态 - 修复：确保会话状态显示正确
+                uiManager.updateSessionStatus({
+                    sessionId: result.data.sessionId,
+                    orderNumber: result.data.orderNumber,
+                    expiresAt: new Date(result.data.expiresAt),
+                    remainingTime: result.data.remainingTime
+                });
+
                 if (typeof dismissOverlay === 'function') {
                     dismissOverlay();
                 }
                 if (typeof loadTutorialContent === 'function') {
                     loadTutorialContent();
                 }
-
-                // 更新会话状态
-                const sessionData = {
-                    sessionId: result.data.sessionId,
-                    orderNumber: result.data.orderNumber,
-                    expiresAt: new Date(result.data.expiresAt),
-                    remainingTime: new Date(result.data.expiresAt) - new Date()
-                };
-                uiManager.updateSessionStatus(sessionData);
             } else {
                 // 没有有效会话，显示验证表单
                 uiManager.showVerificationOverlay();
@@ -354,36 +353,48 @@ class MultiOrderVerification {
             this.verificationElements.orderNumberInput.addEventListener("focus", () => uiManager.hideMessages());
             this.verificationElements.orderNumberInput.addEventListener("input", () => uiManager.hideMessages());
         }
-
-        // URL参数中的订单号
-        const urlParams = new URLSearchParams(window.location.search);
-        const orderNumber = urlParams.get('order');
-        if (orderNumber) {
-            this.verificationElements.orderNumberInput.value = orderNumber.trim();
-            setTimeout(() => {
-                this.verificationElements.verificationForm.dispatchEvent(new Event("submit"));
-            }, 500);
-        }
     }
 
     // 初始化
     init() {
         this.initializeEventListeners();
+    }
 
-        // 页面加载时检查会话状态
-        document.addEventListener('DOMContentLoaded', async () => {
+    // 初始化验证系统 - 修复：添加正确的初始化逻辑
+    async initVerificationSystem() {
+        console.log("🚀 初始化多次订单验证系统");
+
+        // 检查URL中是否有订单号参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderNumber = urlParams.get("order");
+
+        if (orderNumber && orderNumber.trim()) {
+            // 如果URL中有订单号，自动填充并尝试验证
+            this.verificationElements.orderNumberInput.value = orderNumber.trim();
+            // 延迟一点再自动验证，确保页面完全加载
+            setTimeout(() => {
+                this.verificationElements.verificationForm.dispatchEvent(new Event("submit"));
+            }, 500);
+        } else {
+            // 检查会话状态
             await this.checkSessionStatus();
-        });
+        }
     }
 }
 
 // 创建多次订单验证实例
 const multiOrderVerification = new MultiOrderVerification();
 
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', () => {
+// 页面加载完成后初始化 - 修复：使用正确的初始化逻辑
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+        multiOrderVerification.init();
+        multiOrderVerification.initVerificationSystem();
+    });
+} else {
     multiOrderVerification.init();
-});
+    multiOrderVerification.initVerificationSystem();
+}
 
 // 导出到全局作用域（如果需要）
 window.multiOrderVerification = multiOrderVerification;
