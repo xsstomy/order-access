@@ -3,6 +3,7 @@ require("dotenv").config();
 const serverConfig = {
     port: process.env.PORT || 3000,
     nodeEnv: process.env.NODE_ENV || "development",
+    serverUrl: process.env.SERVER_URL || "http://localhost:3000",
 
     // 会话配置
     session: {
@@ -21,9 +22,10 @@ const serverConfig = {
                 return callback(null, true);
             }
 
-            // 生产环境只允许配置的 FRONTEND_URL
+            // 生产环境只允许配置的 FRONTEND_URL 和 SERVER_URL
             const allowedOrigins = [
                 process.env.FRONTEND_URL,
+                process.env.SERVER_URL,
                 "http://localhost:3000",
             ].filter(Boolean);
 

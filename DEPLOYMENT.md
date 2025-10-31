@@ -158,11 +158,37 @@ npm run start:frontend
 ```bash
 NODE_ENV=production              # 运行环境
 PORT=3000                       # API服务端口
+SERVER_URL=http://your-domain.com:3000  # 服务器访问地址 (重要!)
 DB_PATH=./database/orders.db   # 数据库文件路径
 SESSION_SECRET=your-secret-key  # 会话加密密钥
 CORS_ORIGIN=https://your-domain.com  # 允许的前端域名
 TRUST_PROXY=true                # 信任代理头
 ```
+
+#### SERVER_URL 配置说明
+
+`SERVER_URL` 是新增的重要配置项，用于指定服务器的访问地址：
+
+- **开发环境**: `SERVER_URL=http://localhost:3000`
+- **生产环境**: `SERVER_URL=https://your-domain.com` 或 `SERVER_URL=http://your-server-ip:3000`
+
+**配置示例**:
+```bash
+# 域名部署
+SERVER_URL=https://api.yourdomain.com
+
+# IP地址部署
+SERVER_URL=http://192.168.1.100:3000
+
+# 本地开发
+SERVER_URL=http://localhost:3000
+```
+
+**注意事项**:
+- `SERVER_URL` 会自动添加到 CORS 允许列表中
+- 确保配置的地址可以被客户端访问
+- 生产环境建议使用 HTTPS 协议
+- 如果使用反向代理，配置外部可访问的地址
 
 ### 前端环境变量
 前端通过`api.js`中的配置自动检测后端地址：
