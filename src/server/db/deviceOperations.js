@@ -2,7 +2,7 @@ const dbManager = require('../../config/database');
 
 class DeviceOperations {
   constructor() {
-    this.maxDevicesPerOrder = 3;
+    this.maxDevicesPerOrder = parseInt(process.env.MAX_DEVICES_PER_ORDER) || 3;
   }
 
   /**
