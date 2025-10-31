@@ -1,65 +1,78 @@
-require('dotenv').config();
+require("dotenv").config();
 
 const serverConfig = {
-  port: process.env.PORT || 3000,
-  nodeEnv: process.env.NODE_ENV || 'development',
+    port: process.env.PORT || 3000,
+    nodeEnv: process.env.NODE_ENV || "development",
 
-  // 会话配置
-  session: {
-    secret: process.env.SESSION_SECRET || 'change-this-secret-key',
-    maxAge: parseInt(process.env.SESSION_MAX_AGE) || 7200000, // 2小时
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
-  },
-
-  // CORS配置 - 增强配置支持前后端分离
-  cors: {
-    origin: function (origin, callback) {
-      // 允许的域名列表
-      const allowedOrigins = [
-        process.env.FRONTEND_URL,
-        'http://localhost:3000',
-        'http://localhost:8080',
-        'http://localhost:5500',
-        'http://127.0.0.1:3000',
-        'http://127.0.0.1:8080',
-        'http://127.0.0.1:5500'
-      ].filter(Boolean);
-
-      // 开发环境允许所有来源
-      if (process.env.NODE_ENV === 'development') {
-        return callback(null, true);
-      }
-
-      // 生产环境检查白名单
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      callback(new Error('Not allowed by CORS'));
+    // 会话配置
+    session: {
+        secret: process.env.SESSION_SECRET || "change-this-secret-key",
+        maxAge: parseInt(process.env.SESSION_MAX_AGE) || 7200000, // 2小时
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
     },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-ID', 'X-Internal-API-Key'],
-    exposedHeaders: ['X-Total-Count']
-  },
 
-  // 代理配置
-  trustProxy: process.env.TRUST_PROXY === 'true',
+    // CORS配置 - 增强配置支持前后端分离
+    cors: {
+        origin: function (origin, callback) {
+            // 开发环境检测（包含 development 等变体）
+            if (process.env.NODE_ENV?.includes("development")) {
+                return callback(null, true);
+            }
 
-  // 安全头配置
-  helmet: {
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'", "https://s.immersivetranslate.com"]
-      }
-    }
-  }
+            // 生产环境只允许配置的 FRONTEND_URL
+            const allowedOrigins = [
+                process.env.FRONTEND_URL,
+                "http://localhost:3000",
+            ].filter(Boolean);
+
+            console.log(
+                `CORS检查 - 请求来源: ${origin}, 允许的来源: ${allowedOrigins.join(
+                    ", "
+                )}`
+            );
+
+            // 生产环境检查白名单
+            if (!origin || allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+
+            console.log(`CORS拒绝 - 来源 ${origin} 不在允许列表中`);
+            // callback(
+            //     new Error(
+            //         `Not allowed by CORS. Origin ${origin} is not in the allowed list: ${allowedOrigins.join(
+            //             ", "
+            //         )}`
+            //     )
+            // );
+        },
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: [
+            "Content-Type",
+            "Authorization",
+            "X-Session-ID",
+            "X-Internal-API-Key",
+        ],
+        exposedHeaders: ["X-Total-Count"],
+    },
+
+    // 代理配置
+    trustProxy: process.env.TRUST_PROXY === "true",
+
+    // 安全头配置
+    helmet: {
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrc: ["'self'", "'unsafe-inline'"],
+                imgSrc: ["'self'", "data:", "https:"],
+                connectSrc: ["'self'", "https://s.immersivetranslate.com"],
+            },
+        },
+    },
 };
 
 module.exports = serverConfig;

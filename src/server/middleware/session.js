@@ -3,6 +3,7 @@ const crypto = require('crypto');
 class SessionManager {
   constructor() {
     this.activeSessions = new Map(); // 存储活跃会话
+    this.adminSessions = new Map(); // 存储管理员会话
   }
 
   // 生成安全的会话ID
@@ -140,6 +141,74 @@ class SessionManager {
       sessionsByOrder: this.getOrderSessionStats()
     };
   }
+
+  // 管理员会话管理方法
+  createAdminSession() {
+    const sessionId = this.generateSessionId();
+    const session = {
+      id: sessionId,
+      type: 'admin',
+      createdAt: new Date(),
+      lastAccessedAt: new Date()
+    };
+
+    this.adminSessions.set(sessionId, session);
+
+    // 设置会话过期清理
+    setTimeout(() => {
+      this.removeAdminSession(sessionId);
+    }, 7200000); // 2小时
+
+    console.log(`创建管理员会话: ${sessionId}`);
+    return sessionId;
+  }
+
+  // 验证管理员会话
+  validateAdminSession(sessionId) {
+    const session = this.adminSessions.get(sessionId);
+
+    if (!session) {
+      return false;
+    }
+
+    // 更新最后访问时间
+    session.lastAccessedAt = new Date();
+    return true;
+  }
+
+  // 移除管理员会话
+  removeAdminSession(sessionId) {
+    const session = this.adminSessions.get(sessionId);
+    if (session) {
+      this.adminSessions.delete(sessionId);
+      console.log(`移除管理员会话: ${sessionId}`);
+    }
+  }
+
+  // 获取管理员会话
+  getAdminSession(sessionId) {
+    return this.adminSessions.get(sessionId);
+  }
+
+  // 清理过期管理员会话
+  cleanupExpiredAdminSessions() {
+    const now = new Date();
+    const expiredSessions = [];
+
+    for (const [sessionId, session] of this.adminSessions.entries()) {
+      const sessionAge = now - session.createdAt;
+      if (sessionAge > 7200000) { // 2小时
+        expiredSessions.push(sessionId);
+      }
+    }
+
+    expiredSessions.forEach(sessionId => {
+      this.removeAdminSession(sessionId);
+    });
+
+    console.log(`清理了 ${expiredSessions.length} 个过期管理员会话`);
+    return expiredSessions.length;
+  }
 }
 
 // 创建全局会话管理器实例
@@ -148,6 +217,7 @@ const sessionManager = new SessionManager();
 // 定期清理过期会话
 setInterval(() => {
   sessionManager.cleanupExpiredSessions();
+  sessionManager.cleanupExpiredAdminSessions();
 }, 300000); // 每5分钟清理一次
 
 // Express中间件

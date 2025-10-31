@@ -12,9 +12,9 @@ class API {
       console.log('   使用传入的baseURL:', baseURL);
     } else {
       // 自动检测环境
-      if (window.location.hostname === 'localhost' && window.location.port === '8080') {
+      if (window.location.hostname === 'localhost' && (window.location.port === '8080' || window.location.port === '8000')) {
         // 前端开发服务器环境
-        this.baseURL = 'http://localhost:3002';
+        this.baseURL = 'http://localhost:3000';
         console.log('   检测到前端开发服务器环境，设置baseURL:', this.baseURL);
       } else if (window.location.port === '3002') {
         // 直接访问后端环境（测试用）

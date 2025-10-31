@@ -18,6 +18,7 @@ const multiAPI = require('./api/multi');
 const deviceAPI = require('./api/device');
 const tutorialAPI = require('./api/tutorial');
 const sessionAPI = require('./api/session');
+const { router: adminAPI, adminPageAuth } = require('./api/admin');
 
 class OrderAccessServer {
   constructor() {
@@ -60,6 +61,22 @@ class OrderAccessServer {
     this.app.use('/api/device', deviceAPI);
     this.app.use('/api/tutorial', tutorialAPI);
     this.app.use('/api/session', sessionAPI);
+    this.app.use('/api/admin', adminAPI);
+
+    // 静态资源路由 - CSS和JS文件
+    this.app.use('/css', express.static(path.join(__dirname, 'web/css')));
+    this.app.use('/js', express.static(path.join(__dirname, 'web/js')));
+
+    // 管理界面路由 - 登录页面不需要认证
+    this.app.get('/admin/login', (req, res) => {
+      res.sendFile(path.join(__dirname, 'web/admin.html'));
+    });
+
+    // 其他管理页面需要认证
+    this.app.use('/admin', adminPageAuth, express.static(path.join(__dirname, 'web')));
+    this.app.get('/admin', adminPageAuth, (req, res) => {
+      res.sendFile(path.join(__dirname, 'web/admin.html'));
+    });
 
     // 前后端分离 - 移除主页路由，主页由前端服务提供
 

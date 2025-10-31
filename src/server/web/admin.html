@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单管理系统</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="loginScreen" class="screen">
+        <div class="login-container">
+            <div class="login-card">
+                <h1>订单管理系统</h1>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="password">管理员密码</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">登录</button>
+                </form>
+                <div id="loginMessage" class="message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主管理界面 -->
+    <div id="adminScreen" class="screen hidden">
+        <header class="admin-header">
+            <div class="header-content">
+                <h1>订单管理系统</h1>
+                <div class="header-actions">
+                    <span id="sessionInfo"></span>
+                    <button id="logoutBtn" class="btn btn-secondary">登出</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="admin-main">
+            <nav class="admin-nav">
+                <button class="nav-btn active" data-tab="add-orders">添加订单</button>
+                <button class="nav-btn" data-tab="order-list">订单列表</button>
+                <button class="nav-btn" data-tab="search-orders">搜索订单</button>
+            </nav>
+
+            <!-- 添加订单标签页 -->
+            <section id="add-orders" class="tab-content active">
+                <div class="card">
+                    <h2>添加订单</h2>
+
+                    <!-- 单个添加 -->
+                    <div class="add-section">
+                        <h3>单个添加</h3>
+                        <form id="singleAddForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="singleOrderNumber">订单号</label>
+                                    <input type="text" id="singleOrderNumber" placeholder="格式：P开头+18位数字（如：P123456789012345678）" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="singleMaxAccess">最大访问次数（可选）</label>
+                                    <input type="number" id="singleMaxAccess" min="1" placeholder="留空表示无限制">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">添加订单</button>
+                        </form>
+                        <div id="singleAddMessage" class="message"></div>
+                    </div>
+
+                    <!-- 批量添加 -->
+                    <div class="add-section">
+                        <h3>批量添加</h3>
+                        <form id="batchAddForm">
+                            <div class="form-group">
+                                <label for="batchOrders">订单列表</label>
+                                <textarea id="batchOrders" rows="8" required
+                                    placeholder="每行一个订单号，可选格式：&#10;P123456789012345678&#10;P123456789012345678,10&#10;P123456789012345678"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="batchMaxAccess">统一最大访问次数（可选）</label>
+                                <input type="number" id="batchMaxAccess" min="1" placeholder="留空表示无限制">
+                            </div>
+                            <button type="submit" class="btn btn-primary">批量添加</button>
+                        </form>
+                        <div id="batchAddMessage" class="message"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 订单列表标签页 -->
+            <section id="order-list" class="tab-content">
+                <div class="card">
+                    <h2>订单列表</h2>
+                    <div class="table-controls">
+                        <button id="refreshListBtn" class="btn btn-secondary">刷新</button>
+                        <span id="listInfo"></span>
+                    </div>
+                    <div class="table-container">
+                        <table id="ordersTable">
+                            <thead>
+                                <tr>
+                                    <th>订单号</th>
+                                    <th>创建时间</th>
+                                    <th>最大访问次数</th>
+                                    <th>已使用次数</th>
+                                    <th>剩余访问次数</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading">加载中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="listPagination" class="pagination"></div>
+                </div>
+            </section>
+
+            <!-- 搜索订单标签页 -->
+            <section id="search-orders" class="tab-content">
+                <div class="card">
+                    <h2>搜索订单</h2>
+                    <form id="searchForm">
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="searchQuery">搜索关键词</label>
+                                <input type="text" id="searchQuery" placeholder="输入订单号关键词" required>
+                            </div>
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary">搜索</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchMessage" class="message"></div>
+
+                    <div id="searchResults" class="search-results hidden">
+                        <div class="table-controls">
+                            <span id="searchInfo"></span>
+                        </div>
+                        <div class="table-container">
+                            <table id="searchTable">
+                                <thead>
+                                    <tr>
+                                        <th>订单号</th>
+                                        <th>创建时间</th>
+                                        <th>最大访问次数</th>
+                                        <th>已使用次数</th>
+                                        <th>剩余访问次数</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="searchTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="searchPagination" class="pagination"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 订单详情模态框 -->
+    <div id="orderModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>订单详情</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="orderDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑订单模态框 -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑订单</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <div class="form-group">
+                        <label for="editOrderNumber">订单号</label>
+                        <input type="text" id="editOrderNumber" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="editMaxAccess">最大访问次数</label>
+                        <input type="number" id="editMaxAccess" min="1" placeholder="留空表示无限制">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary modal-cancel">取消</button>
+                        <button type="submit" class="btn btn-primary">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div id="deleteModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>确认删除</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除订单 <strong id="deleteOrderNumber"></strong> 吗？</p>
+                <p class="warning">此操作将同时删除该订单的所有使用记录，且无法恢复！</p>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary modal-cancel">取消</button>
+                    <button id="confirmDeleteBtn" class="btn btn-danger">确认删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/admin.js"></script>
+</body>
+</html>
