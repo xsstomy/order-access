@@ -28,6 +28,8 @@ class DatabaseManager {
               this.db.run('PRAGMA busy_timeout = 30000');
               // 设置更宽松的同步模式
               this.db.run('PRAGMA synchronous = NORMAL');
+              // 注意：SQLite 不支持 PRAGMA time_zone，我们将通过应用层处理时区
+              // 所有时间戳将在应用层转换为北京时间
 
               resolve(this.db);
             });
@@ -122,6 +124,29 @@ class DatabaseManager {
         }
       });
     });
+  }
+
+  // 获取北京时间
+  getBeijingTime() {
+    return new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
+  }
+
+  // 格式化为数据库时间字符串 (北京时间)
+  formatBeijingDateTime(date = null) {
+    const beijingTime = date || this.getBeijingTime();
+    return beijingTime.toISOString().replace('T', ' ').substring(0, 19);
+  }
+
+  // 将UTC时间字符串转换为北京时间字符串
+  convertUtcToBeijing(utcDateTimeStr) {
+    if (!utcDateTimeStr) return null;
+    // 使用SQLite的datetime函数进行时区转换
+    return `datetime('${utcDateTimeStr}', '+08:00')`;
+  }
+
+  // 获取北京时间戳字符串 (用于数据库操作)
+  getBeijingTimestamp() {
+    return this.formatBeijingDateTime();
   }
 }
 

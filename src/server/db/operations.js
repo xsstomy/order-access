@@ -5,6 +5,22 @@ class OrderOperations {
     // 构造函数不需要特别操作
   }
 
+  // 获取北京时间
+  getBeijingTime() {
+    return new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
+  }
+
+  // 格式化为数据库时间字符串 (北京时间)
+  formatBeijingDateTime(date = null) {
+    const beijingTime = date || this.getBeijingTime();
+    return beijingTime.toISOString().replace('T', ' ').substring(0, 19);
+  }
+
+  // 获取北京时间戳字符串 (用于数据库操作)
+  getBeijingTimestamp() {
+    return this.formatBeijingDateTime();
+  }
+
   // 检查订单是否存在及其类型（支持24小时窗口期）
   async checkOrder(orderNumber) {
     try {
@@ -113,10 +129,11 @@ class OrderOperations {
   // 记录订单使用情况（原子操作）
   async recordOrderUsage(orderNumber, ipAddress, userAgent, sessionId, deviceId = null) {
     try {
+      const beijingTime = this.getBeijingTimestamp();
       const result = await dbManager.run(`
-        INSERT INTO order_usage (order_number, ip_address, user_agent, session_id, device_id)
-        VALUES (?, ?, ?, ?, ?)
-      `, [orderNumber, ipAddress, userAgent, sessionId, deviceId]);
+        INSERT INTO order_usage (order_number, ip_address, user_agent, session_id, device_id, accessed_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `, [orderNumber, ipAddress, userAgent, sessionId, deviceId, beijingTime]);
       return result;
     } catch (error) {
       console.error('记录订单使用失败:', error.message);
@@ -217,19 +234,19 @@ class OrderOperations {
   // 创建24小时访问窗口期（用于单次或多次订单）
   async create24HourAccessWindow(orderNumber, orderType = 'single') {
     try {
-      const now = new Date();
+      const now = this.getBeijingTime();
       const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24小时后
 
       const result = await dbManager.run(`
         INSERT OR REPLACE INTO order_access_windows
         (order_number, first_accessed_at, expires_at, order_type)
         VALUES (?, ?, ?, ?)
-      `, [orderNumber, now.toISOString(), expiresAt.toISOString(), orderType]);
+      `, [orderNumber, this.formatBeijingDateTime(now), this.formatBeijingDateTime(expiresAt), orderType]);
 
-      console.log(`创建24小时访问窗口期: ${orderNumber} (${orderType}), 过期时间: ${expiresAt.toISOString()}`);
+      console.log(`创建24小时访问窗口期: ${orderNumber} (${orderType}), 过期时间: ${this.formatBeijingDateTime(expiresAt)}`);
       return {
         success: true,
-        expiresAt: expiresAt.toISOString(),
+        expiresAt: this.formatBeijingDateTime(expiresAt),
         windowId: result.lastID,
         orderType
       };

@@ -84,6 +84,55 @@
                         </form>
                         <div id="batchAddMessage" class="message"></div>
                     </div>
+                    <!-- 文件导入 -->
+                    <div class="add-section">
+                        <h3>文件导入</h3>
+                        <form id="fileImportForm" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="fileInput">选择文本文件 (.txt)</label>
+                                <input type="file" id="fileInput" name="file" accept=".txt,text/plain" required>
+                                <small class="form-help">支持每行一个订单号的文本文件，文件大小限制10MB</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="fileMaxAccess">统一最大访问次数（可选）</label>
+                                <input type="number" id="fileMaxAccess" min="1" placeholder="留空表示无限制">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <span id="uploadBtnText">上传导入</span>
+                                <span id="uploadProgress" class="hidden">上传中...</span>
+                            </button>
+                        </form>
+                        <div id="fileImportMessage" class="message"></div>
+                        <div id="importResults" class="import-results hidden">
+                            <h4>导入结果</h4>
+                            <div class="result-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">总行数:</span>
+                                    <span id="statTotalLines">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">有效订单:</span>
+                                    <span id="statValidOrders">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">成功导入:</span>
+                                    <span id="statInserted">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">重复跳过:</span>
+                                    <span id="statDuplicates">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">格式错误:</span>
+                                    <span id="statInvalid">0</span>
+                                </div>
+                            </div>
+                            <div id="invalidOrdersList" class="invalid-orders-list hidden">
+                                <h5>格式错误的订单:</h5>
+                                <ul id="invalidOrdersItems"></ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 

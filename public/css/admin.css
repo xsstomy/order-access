@@ -603,3 +603,109 @@ table tr:hover {
         font-size: 11px;
     }
 }
+
+/* 文件上传样式 */
+.form-help {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 12px;
+    font-style: italic;
+}
+
+input[type="file"] {
+    border: 1px solid #ddd;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+}
+
+input[type="file"]:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+/* 导入结果样式 */
+.import-results {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.import-results h4 {
+    margin-bottom: 15px;
+    color: #495057;
+    font-size: 16px;
+}
+
+.result-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.stat-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.stat-item span:last-child {
+    font-weight: 600;
+    color: #007bff;
+}
+
+.invalid-orders-list {
+    margin-top: 15px;
+    padding: 12px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+}
+
+.invalid-orders-list h5 {
+    margin-bottom: 10px;
+    color: #856404;
+    font-size: 14px;
+}
+
+.invalid-orders-list ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.invalid-orders-list li {
+    margin-bottom: 5px;
+    font-size: 13px;
+    color: #856404;
+}
+
+.invalid-orders-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* 上传进度样式 */
+#uploadProgress {
+    margin-left: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+#uploadBtnText.loading {
+    color: #999;
+}

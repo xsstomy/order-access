@@ -1,5 +1,7 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs').promises;
+const multer = require('multer');
 const { sessionManager } = require('../middleware/session');
 const OrderOperations = require('../db/operations');
 const { apiRateLimiter } = require('../middleware/rateLimit');
@@ -512,6 +514,146 @@ router.post('/orders/batch-add', requireAdminAuth, apiRateLimiter, async (req, r
     return res.json({
       success: false,
       message: '批量添加失败'
+    });
+  }
+});
+
+// ============ 文本文件导入功能 ============
+
+// 配置 multer 用于文件上传
+const upload = multer({
+  dest: 'uploads/', // 临时上传目录
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB 限制
+  },
+  fileFilter: (req, file, cb) => {
+    // 只允许文本文件
+    if (file.mimetype === 'text/plain' || file.originalname.endsWith('.txt')) {
+      cb(null, true);
+    } else {
+      cb(new Error('只支持 .txt 文本文件'));
+    }
+  }
+});
+
+// 文本文件导入订单
+router.post('/orders/import-text', requireAdminAuth, apiRateLimiter, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.json({
+        success: false,
+        message: '请选择要上传的文本文件'
+      });
+    }
+
+    const { maxAccess } = req.body;
+    const filePath = req.file.path;
+
+    // 读取文件内容
+    const fileContent = await fs.readFile(filePath, 'utf8');
+
+    // 清理临时文件
+    await fs.unlink(filePath);
+
+    // 按行分割并过滤空行
+    const lines = fileContent.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+
+    if (lines.length === 0) {
+      return res.json({
+        success: false,
+        message: '文件内容为空，请检查文件格式'
+      });
+    }
+
+    const validOrders = [];
+    const invalidOrders = [];
+    const duplicateOrders = [];
+
+    // 验证每个订单号
+    for (let i = 0; i < lines.length; i++) {
+      const orderNumber = lines[i];
+
+      // 验证订单格式（P开头 + 18位数字，共19位）
+      if (!ORDER_NUMBER_REGEX.test(orderNumber)) {
+        invalidOrders.push({
+          lineNumber: i + 1,
+          orderNumber: orderNumber,
+          reason: '格式错误，应为P开头+18位数字'
+        });
+        continue;
+      }
+
+      validOrders.push({
+        orderNumber: orderNumber.trim(),
+        maxAccess: maxAccess ? Number(maxAccess) : null
+      });
+    }
+
+    if (validOrders.length === 0) {
+      return res.json({
+        success: false,
+        message: '没有找到有效的订单号',
+        totalLines: lines.length,
+        invalidOrders: invalidOrders
+      });
+    }
+
+    // 批量插入订单
+    const insertedCount = await orderOps.addMultipleMultiOrders(validOrders);
+
+    // 检查重复订单（插入数量小于有效订单数量可能表示有重复）
+    const duplicateCount = validOrders.length - insertedCount;
+    if (duplicateCount > 0) {
+      // 注意：由于使用了 INSERT OR IGNORE，我们无法直接知道哪些是重复的
+      // 这里只提供数量统计
+    }
+
+    console.log(`管理员文本文件导入: ${insertedCount}/${validOrders.length} 个订单成功导入，文件: ${req.file.originalname}`);
+
+    let responseMessage = `成功导入 ${insertedCount} 个订单号`;
+    if (duplicateCount > 0) {
+      responseMessage += `，跳过 ${duplicateCount} 个重复订单`;
+    }
+    if (invalidOrders.length > 0) {
+      responseMessage += `，${invalidOrders.length} 个订单因格式错误被跳过`;
+    }
+
+    return res.json({
+      success: true,
+      message: responseMessage,
+      statistics: {
+        totalLines: lines.length,
+        validOrders: validOrders.length,
+        inserted: insertedCount,
+        duplicates: duplicateCount,
+        invalid: invalidOrders.length
+      },
+      invalidOrders: invalidOrders.length > 0 ? invalidOrders : undefined
+    });
+
+  } catch (error) {
+    // 清理临时文件（如果存在）
+    if (req.file && req.file.path) {
+      try {
+        await fs.unlink(req.file.path);
+      } catch (cleanupError) {
+        console.error('清理临时文件失败:', cleanupError);
+      }
+    }
+
+    console.error('文本文件导入失败:', error);
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.json({
+        success: false,
+        message: '文件大小超过限制（最大10MB）'
+      });
+    }
+
+    return res.json({
+      success: false,
+      message: '文件导入失败: ' + error.message
     });
   }
 });

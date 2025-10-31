@@ -5,6 +5,17 @@ class DeviceOperations {
     this.maxDevicesPerOrder = parseInt(process.env.MAX_DEVICES_PER_ORDER) || 3;
   }
 
+  // 获取北京时间
+  getBeijingTime() {
+    return new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
+  }
+
+  // 格式化为数据库时间字符串 (北京时间)
+  formatBeijingDateTime(date = null) {
+    const beijingTime = date || this.getBeijingTime();
+    return beijingTime.toISOString().replace('T', ' ').substring(0, 19);
+  }
+
   /**
    * 检查设备是否已绑定到订单
    */
@@ -59,10 +70,11 @@ class DeviceOperations {
       }
 
       // 创建新绑定
+      const beijingTime = this.formatBeijingDateTime();
       const result = await dbManager.run(`
-        INSERT INTO device_bindings (order_number, device_id)
-        VALUES (?, ?)
-      `, [orderNumber, deviceId]);
+        INSERT INTO device_bindings (order_number, device_id, created_at, last_accessed_at)
+        VALUES (?, ?, ?, ?)
+      `, [orderNumber, deviceId, beijingTime, beijingTime]);
 
       return {
         isNew: true,
@@ -80,11 +92,12 @@ class DeviceOperations {
    */
   async updateLastAccessed(orderNumber, deviceId) {
     try {
+      const beijingTime = this.formatBeijingDateTime();
       await dbManager.run(`
         UPDATE device_bindings
-        SET last_accessed_at = CURRENT_TIMESTAMP
+        SET last_accessed_at = ?
         WHERE order_number = ? AND device_id = ?
-      `, [orderNumber, deviceId]);
+      `, [beijingTime, orderNumber, deviceId]);
     } catch (error) {
       console.error('更新最后访问时间失败:', error.message);
       throw error;
