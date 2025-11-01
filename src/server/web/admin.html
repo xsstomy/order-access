@@ -4,159 +4,639 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>订单管理系统</title>
+    <!-- Bulma CSS - Local Version -->
+    <link rel="stylesheet" href="/css/bulma.min.css">
+    <!-- Font Awesome for icons -->
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> -->
+    <!-- Custom CSS for additional styling -->
     <link rel="stylesheet" href="/css/admin.css">
 </head>
 <body>
     <!-- 登录界面 -->
-    <div id="loginScreen" class="screen">
-        <div class="login-container">
-            <div class="login-card">
-                <h1>订单管理系统</h1>
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label for="password">管理员密码</label>
-                        <input type="password" id="password" name="password" required>
+    <div id="loginScreen" class="hero is-fullheight is-primary">
+        <div class="hero-body">
+            <div class="container">
+                <div class="columns is-centered">
+                    <div class="column is-4-desktop is-5-tablet is-11-mobile">
+                        <div class="card has-shadow">
+                            <header class="card-header has-background-primary">
+                                <div class="card-header-title is-centered is-4">
+                                    <span class="icon-text">
+                                        <span class="icon has-text-white">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </span>
+                                        <span class="has-text-white">订单管理系统</span>
+                                    </span>
+                                </div>
+                            </header>
+                            <div class="card-content">
+                                <form id="loginForm">
+                                    <div class="field">
+                                        <label for="password" class="label">管理员密码</label>
+                                        <div class="control has-icons-left">
+                                            <input type="password" id="password" name="password" class="input is-medium" placeholder="请输入密码" required>
+                                            <span class="icon is-left">
+                                                <i class="fas fa-lock"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <div class="control">
+                                            <button type="submit" class="button is-medium is-primary is-fullwidth">
+                                                <span class="icon">
+                                                    <i class="fas fa-sign-in-alt"></i>
+                                                </span>
+                                                <span>登录</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <div id="loginMessage" class="notification is-hidden mt-5"></div>
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">登录</button>
-                </form>
-                <div id="loginMessage" class="message"></div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-foot">
+            <div class="container has-text-centered">
+                <p class="has-text-grey-lighter">
+                    <small>© 2025 订单管理系统 - 安全登录</small>
+                </p>
             </div>
         </div>
     </div>
 
     <!-- 主管理界面 -->
-    <div id="adminScreen" class="screen hidden">
-        <header class="admin-header">
-            <div class="header-content">
-                <h1>订单管理系统</h1>
-                <div class="header-actions">
-                    <span id="sessionInfo"></span>
-                    <button id="logoutBtn" class="btn btn-secondary">登出</button>
+    <div id="adminScreen" class="is-hidden">
+        <!-- 顶部导航栏 -->
+        <nav class="navbar is-info is-fixed-top" role="navigation">
+            <div class="navbar-brand">
+                <div class="navbar-item">
+                    <span class="icon-text">
+                        <span class="icon has-text-white">
+                            <i class="fas fa-clipboard-list"></i>
+                        </span>
+                        <span class="has-text-weight-bold has-text-white">订单管理系统</span>
+                    </span>
+                </div>
+                <div class="navbar-burger" data-target="navbarMenu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </div>
             </div>
-        </header>
+            <div id="navbarMenu" class="navbar-menu">
+                <div class="navbar-start">
+                    <!-- 这里可以添加其他导航项，但标签页将移到主要内容区域 -->
+                </div>
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <div class="field is-grouped">
+                            <p class="control">
+                                <span id="sessionInfo" class="tag is-success is-light">
+                                    <span class="icon is-small">
+                                        <i class="fas fa-clock"></i>
+                                    </span>
+                                    <span>登录时长</span>
+                                </span>
+                            </p>
+                            <p class="control">
+                                <button id="logoutBtn" class="button is-warning is-outlined">
+                                    <span class="icon is-small">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                    </span>
+                                    <span>登出</span>
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
 
-        <main class="admin-main">
-            <nav class="admin-nav">
-                <button class="nav-btn active" data-tab="add-orders">添加订单</button>
-                <button class="nav-btn" data-tab="order-list">订单列表</button>
-                <button class="nav-btn" data-tab="search-orders">搜索订单</button>
-            </nav>
+        <!-- 主要内容区域 -->
+        <main class="container is-fluid" style="padding-top: 80px;">
+            <!-- 标准的 Bulma 标签页导航 -->
+            <div class="tabs is-boxed is-fullwidth mb-6">
+                <ul>
+                    <li class="is-active" data-tab="add-orders">
+                        <a>
+                            <span class="icon is-small">
+                                <i class="fas fa-plus-circle"></i>
+                            </span>
+                            <span>添加订单</span>
+                        </a>
+                    </li>
+                    <li data-tab="order-list">
+                        <a>
+                            <span class="icon is-small">
+                                <i class="fas fa-list-ul"></i>
+                            </span>
+                            <span>订单列表</span>
+                        </a>
+                    </li>
+                    <li data-tab="search-orders">
+                        <a>
+                            <span class="icon is-small">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <span>搜索订单</span>
+                        </a>
+                    </li>
+                    <li data-tab="verification-records">
+                        <a>
+                            <span class="icon is-small">
+                                <i class="fas fa-history"></i>
+                            </span>
+                            <span>验证记录</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
 
             <!-- 添加订单标签页 -->
-            <section id="add-orders" class="tab-content active">
+            <section id="add-orders" class="content-section">
                 <div class="card">
-                    <h2>添加订单</h2>
-
-                    <!-- 单个添加 -->
-                    <div class="add-section">
-                        <h3>单个添加</h3>
-                        <form id="singleAddForm">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="singleOrderNumber">订单号</label>
-                                    <input type="text" id="singleOrderNumber" placeholder="格式：P开头+18位数字（如：P123456789012345678）" required>
+                    <header class="card-header has-background-primary">
+                        <p class="card-header-title has-text-white">
+                            <span class="icon">
+                                <i class="fas fa-plus-circle"></i>
+                            </span>
+                            <span>添加订单</span>
+                        </p>
+                        <div class="card-header-icon">
+                            <span class="tag is-success is-light">
+                                <span class="icon is-small">
+                                    <i class="fas fa-plus"></i>
+                                </span>
+                                <span>新建</span>
+                            </span>
+                        </div>
+                    </header>
+                    <div class="card-content">
+                        <!-- 单个添加 -->
+                        <div class="box has-background-success-light">
+                            <h3 class="title is-5 has-text-success-dark mb-4">
+                                <span class="icon-text">
+                                    <span class="icon has-text-success">
+                                        <i class="fas fa-file-plus"></i>
+                                    </span>
+                                    <span>单个添加</span>
+                                </span>
+                            </h3>
+                            <form id="singleAddForm">
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-normal">
+                                        <label for="singleOrderNumber" class="label">订单号</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field">
+                                            <div class="control has-icons-left">
+                                                <input type="text" id="singleOrderNumber" class="input is-success"
+                                                    placeholder="格式：P开头+18位数字（如：P123456789012345678）" required>
+                                                <span class="icon is-small is-left">
+                                                    <i class="fas fa-hashtag"></i>
+                                                </span>
+                                            </div>
+                                            <p class="help is-success">请输入P开头+18位数字的订单号</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="singleMaxAccess">最大访问次数（可选）</label>
-                                    <input type="number" id="singleMaxAccess" min="1" placeholder="留空表示无限制">
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-normal">
+                                        <label for="singleMaxAccess" class="label">访问次数</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field">
+                                            <div class="control has-icons-left">
+                                                <input type="number" id="singleMaxAccess" class="input is-info" min="1"
+                                                    placeholder="留空表示无限制">
+                                                <span class="icon is-small is-left">
+                                                    <i class="fas fa-shield-alt"></i>
+                                                </span>
+                                            </div>
+                                            <p class="help is-info">设置订单的最大访问次数限制</p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary">添加订单</button>
-                        </form>
-                        <div id="singleAddMessage" class="message"></div>
-                    </div>
+                                <div class="field is-horizontal">
+                                    <div class="field-label"></div>
+                                    <div class="field-body">
+                                        <div class="field">
+                                            <div class="control">
+                                                <button type="submit" class="button is-success is-medium">
+                                                    <span class="icon">
+                                                        <i class="fas fa-plus-circle"></i>
+                                                    </span>
+                                                    <span>添加订单</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                            <div id="singleAddMessage" class="notification is-hidden"></div>
+                        </div>
 
-                    <!-- 批量添加 -->
-                    <div class="add-section">
-                        <h3>批量添加</h3>
-                        <form id="batchAddForm">
-                            <div class="form-group">
-                                <label for="batchOrders">订单列表</label>
-                                <textarea id="batchOrders" rows="8" required
-                                    placeholder="每行一个订单号，可选格式：&#10;P123456789012345678&#10;P123456789012345678,10&#10;P123456789012345678"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="batchMaxAccess">统一最大访问次数（可选）</label>
-                                <input type="number" id="batchMaxAccess" min="1" placeholder="留空表示无限制">
-                            </div>
-                            <button type="submit" class="btn btn-primary">批量添加</button>
-                        </form>
-                        <div id="batchAddMessage" class="message"></div>
+                        <!-- 批量添加 -->
+                        <div class="box has-background-info-light">
+                            <h3 class="title is-5 has-text-info-dark mb-4">
+                                <span class="icon-text">
+                                    <span class="icon has-text-info">
+                                        <i class="fas fa-file-import"></i>
+                                    </span>
+                                    <span>批量添加</span>
+                                </span>
+                            </h3>
+                            <form id="batchAddForm">
+                                <div class="field">
+                                    <label for="batchOrders" class="label has-text-info-dark">订单列表</label>
+                                    <div class="control">
+                                        <textarea id="batchOrders" class="textarea is-info" rows="8" required
+                                            placeholder="每行一个订单号，可选格式：&#10;P123456789012345678&#10;P123456789012345678,10&#10;P123456789012345678"></textarea>
+                                    </div>
+                                    <p class="help is-info">支持批量导入，每行一个订单，可附加访问次数限制</p>
+                                </div>
+                                <div class="field">
+                                    <label for="batchMaxAccess" class="label has-text-info-dark">统一访问次数</label>
+                                    <div class="control has-icons-left">
+                                        <input type="number" id="batchMaxAccess" class="input is-info" min="1"
+                                            placeholder="留空表示无限制">
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-users"></i>
+                                        </span>
+                                    </div>
+                                    <p class="help is-info">为所有批量订单设置统一的访问次数限制</p>
+                                </div>
+                                <div class="field">
+                                    <div class="control">
+                                        <button type="submit" class="button is-info is-medium">
+                                            <span class="icon">
+                                                <i class="fas fa-upload"></i>
+                                            </span>
+                                            <span>批量添加</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            <div id="batchAddMessage" class="notification is-hidden"></div>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- 订单列表标签页 -->
-            <section id="order-list" class="tab-content">
+            <section id="order-list" class="content-section is-hidden">
                 <div class="card">
-                    <h2>订单列表</h2>
-                    <div class="table-controls">
-                        <button id="refreshListBtn" class="btn btn-secondary">刷新</button>
-                        <span id="listInfo"></span>
+                    <header class="card-header has-background-info">
+                        <p class="card-header-title has-text-white">
+                            <span class="icon">
+                                <i class="fas fa-list-ul"></i>
+                            </span>
+                            <span>订单列表</span>
+                        </p>
+                        <div class="card-header-icon">
+                            <div class="buttons">
+                                <button id="refreshListBtn" class="button is-success is-small is-outlined">
+                                    <span class="icon">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </span>
+                                    <span>刷新</span>
+                                </button>
+                                <span class="tag is-warning is-light">
+                                    <span class="icon is-small">
+                                        <i class="fas fa-database"></i>
+                                    </span>
+                                    <span id="listInfo">0 条记录</span>
+                                </span>
+                            </div>
+                        </div>
+                    </header>
+                    <div class="card-content">
+                        <div class="table-container">
+                            <table id="ordersTable" class="table is-fullwidth is-striped is-hoverable is-bordered">
+                                <thead>
+                                    <tr class="has-background-info">
+                                        <th class="has-text-white">
+                                            <span class="icon-text">
+                                                <span class="icon is-small">
+                                                    <i class="fas fa-hashtag"></i>
+                                                </span>
+                                                <span>订单号</span>
+                                            </span>
+                                        </th>
+                                        <th class="has-text-white">
+                                            <span class="icon-text">
+                                                <span class="icon is-small">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                </span>
+                                                <span>创建时间</span>
+                                            </span>
+                                        </th>
+                                        <th class="has-text-white has-text-centered">
+                                            <span class="icon-text">
+                                                <span class="icon is-small">
+                                                    <i class="fas fa-shield-alt"></i>
+                                                </span>
+                                                <span>最大访问</span>
+                                            </span>
+                                        </th>
+                                        <th class="has-text-white has-text-centered">
+                                            <span class="icon-text">
+                                                <span class="icon is-small">
+                                                    <i class="fas fa-chart-line"></i>
+                                                </span>
+                                                <span>已使用</span>
+                                            </span>
+                                        </th>
+                                        <th class="has-text-white has-text-centered">
+                                            <span class="icon-text">
+                                                <span class="icon is-small">
+                                                    <i class="fas fa-battery-half"></i>
+                                                </span>
+                                                <span>剩余次数</span>
+                                            </span>
+                                        </th>
+                                        <th class="has-text-white has-text-centered">
+                                            <span class="icon-text">
+                                                <span class="icon is-small">
+                                                    <i class="fas fa-cogs"></i>
+                                                </span>
+                                                <span>操作</span>
+                                            </span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ordersTableBody">
+                                    <tr>
+                                        <td colspan="6" class="has-text-centered py-6">
+                                            <div class="has-text-info">
+                                                <span class="icon is-large">
+                                                    <i class="fas fa-spinner fa-pulse"></i>
+                                                </span>
+                                                <p class="mt-3 has-text-weight-bold">正在加载订单数据...</p>
+                                                <p class="is-size-7 has-text-grey">请稍候片刻</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <nav id="listPagination" class="pagination is-centered is-medium" role="navigation" aria-label="pagination">
+                            <!-- 分页按钮将由JavaScript动态生成 -->
+                        </nav>
                     </div>
-                    <div class="table-container">
-                        <table id="ordersTable">
-                            <thead>
-                                <tr>
-                                    <th>订单号</th>
-                                    <th>创建时间</th>
-                                    <th>最大访问次数</th>
-                                    <th>已使用次数</th>
-                                    <th>剩余访问次数</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ordersTableBody">
-                                <tr>
-                                    <td colspan="6" class="loading">加载中...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div id="listPagination" class="pagination"></div>
                 </div>
             </section>
 
             <!-- 搜索订单标签页 -->
-            <section id="search-orders" class="tab-content">
+            <section id="search-orders" class="content-section is-hidden">
                 <div class="card">
-                    <h2>搜索订单</h2>
-                    <form id="searchForm">
-                        <div class="form-row">
-                            <div class="form-group flex-1">
-                                <label for="searchQuery">搜索关键词</label>
-                                <input type="text" id="searchQuery" placeholder="输入订单号关键词" required>
-                            </div>
-                            <div class="form-group">
-                                <label>&nbsp;</label>
-                                <button type="submit" class="btn btn-primary">搜索</button>
-                            </div>
+                    <header class="card-header has-background-warning">
+                        <p class="card-header-title has-text-white">
+                            <span class="icon">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <span>搜索订单</span>
+                        </p>
+                        <div class="card-header-icon">
+                            <span class="tag is-danger is-light">
+                                <span class="icon is-small">
+                                    <i class="fas fa-filter"></i>
+                                </span>
+                                <span>筛选</span>
+                            </span>
                         </div>
-                    </form>
-                    <div id="searchMessage" class="message"></div>
+                    </header>
+                    <div class="card-content">
+                        <form id="searchForm" class="box has-background-warning-light">
+                            <div class="field has-addons">
+                                <div class="control is-expanded has-icons-left">
+                                    <input type="text" id="searchQuery" class="input is-warning is-medium"
+                                        placeholder="🔍 输入订单号关键词进行搜索..." required>
+                                    <span class="icon is-left">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                </div>
+                                <div class="control">
+                                    <button type="submit" class="button is-warning is-medium">
+                                        <span class="icon">
+                                            <i class="fas fa-search-plus"></i>
+                                        </span>
+                                        <span>搜索</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        <div id="searchMessage" class="notification is-hidden"></div>
 
-                    <div id="searchResults" class="search-results hidden">
-                        <div class="table-controls">
-                            <span id="searchInfo"></span>
+                        <div id="searchResults" class="is-hidden">
+                            <div class="level mb-4">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <span id="searchInfo" class="tag is-success is-medium">
+                                            <span class="icon is-small">
+                                                <i class="fas fa-check-circle"></i>
+                                            </span>
+                                            <span>搜索结果</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="table-container">
+                                <table id="searchTable" class="table is-fullwidth is-striped is-hoverable is-bordered">
+                                    <thead>
+                                        <tr class="has-background-warning">
+                                            <th class="has-text-white">
+                                                <span class="icon-text">
+                                                    <span class="icon is-small">
+                                                        <i class="fas fa-hashtag"></i>
+                                                    </span>
+                                                    <span>订单号</span>
+                                                </span>
+                                            </th>
+                                            <th class="has-text-white">
+                                                <span class="icon-text">
+                                                    <span class="icon is-small">
+                                                        <i class="fas fa-calendar"></i>
+                                                    </span>
+                                                    <span>创建时间</span>
+                                                </span>
+                                            </th>
+                                            <th class="has-text-white has-text-centered">
+                                                <span class="icon-text">
+                                                    <span class="icon is-small">
+                                                        <i class="fas fa-shield-alt"></i>
+                                                    </span>
+                                                    <span>最大访问</span>
+                                                </span>
+                                            </th>
+                                            <th class="has-text-white has-text-centered">
+                                                <span class="icon-text">
+                                                    <span class="icon is-small">
+                                                        <i class="fas fa-chart-line"></i>
+                                                    </span>
+                                                    <span>已使用</span>
+                                                </span>
+                                            </th>
+                                            <th class="has-text-white has-text-centered">
+                                                <span class="icon-text">
+                                                    <span class="icon is-small">
+                                                        <i class="fas fa-battery-three-quarters"></i>
+                                                    </span>
+                                                    <span>剩余次数</span>
+                                                </span>
+                                            </th>
+                                            <th class="has-text-white has-text-centered">
+                                                <span class="icon-text">
+                                                    <span class="icon is-small">
+                                                        <i class="fas fa-tools"></i>
+                                                    </span>
+                                                    <span>操作</span>
+                                                </span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="searchTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                            <nav id="searchPagination" class="pagination is-centered is-medium" role="navigation" aria-label="pagination">
+                                <!-- 分页按钮将由JavaScript动态生成 -->
+                            </nav>
                         </div>
-                        <div class="table-container">
-                            <table id="searchTable">
-                                <thead>
-                                    <tr>
-                                        <th>订单号</th>
-                                        <th>创建时间</th>
-                                        <th>最大访问次数</th>
-                                        <th>已使用次数</th>
-                                        <th>剩余访问次数</th>
-                                        <th>操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="searchTableBody">
-                                </tbody>
-                            </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 验证记录标签页 -->
+            <section id="verification-records" class="content-section is-hidden">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="icon"><i class="fas fa-history"></i></span>
+                            <span>订单验证记录</span>
+                        </p>
+                        <div class="card-header-icon">
+                            <button id="refreshVerificationBtn" class="button is-info is-small">
+                                <span class="icon"><i class="fas fa-sync-alt"></i></span>
+                                <span>刷新</span>
+                            </button>
                         </div>
-                        <div id="searchPagination" class="pagination"></div>
+                    </header>
+                    <div class="card-content">
+                        <!-- 筛选表单 -->
+                        <form id="verificationFilterForm" class="box">
+                            <div class="columns">
+                                <div class="column is-3">
+                                    <div class="field">
+                                        <label for="filterOrderNumber" class="label">订单号</label>
+                                        <div class="control">
+                                            <input type="text" id="filterOrderNumber" class="input"
+                                                placeholder="输入订单号关键词">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column is-2">
+                                    <div class="field">
+                                        <label for="filterDateFrom" class="label">开始日期</label>
+                                        <div class="control">
+                                            <input type="date" id="filterDateFrom" class="input">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column is-2">
+                                    <div class="field">
+                                        <label for="filterDateTo" class="label">结束日期</label>
+                                        <div class="control">
+                                            <input type="date" id="filterDateTo" class="input">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column is-2">
+                                    <div class="field">
+                                        <label for="sortBy" class="label">排序方式</label>
+                                        <div class="control">
+                                            <div class="select is-fullwidth">
+                                                <select id="sortBy">
+                                                    <option value="usageCount">验证次数</option>
+                                                    <option value="firstAccess">首次验证</option>
+                                                    <option value="lastAccess">最后验证</option>
+                                                    <option value="orderNumber">订单号</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column is-2">
+                                    <div class="field">
+                                        <label for="sortOrder" class="label">排序顺序</label>
+                                        <div class="control">
+                                            <div class="select is-fullwidth">
+                                                <select id="sortOrder">
+                                                    <option value="desc">降序</option>
+                                                    <option value="asc">升序</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column is-1">
+                                    <div class="field">
+                                        <label class="label">&nbsp;</label>
+                                        <div class="control">
+                                            <div class="buttons">
+                                                <button type="submit" class="button is-primary">筛选</button>
+                                                <button type="button" id="resetFiltersBtn" class="button is-light">重置</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    <div id="verificationMessage" class="notification is-hidden"></div>
+
+                        <!-- 统计列表 -->
+                        <div id="verificationStats">
+                            <div class="level mb-4">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <span id="verificationInfo" class="tag is-info"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="table-container">
+                                <table id="verificationTable" class="table is-fullwidth is-striped is-hoverable">
+                                    <thead>
+                                        <tr>
+                                            <th>订单号</th>
+                                            <th>验证次数</th>
+                                            <th>首次验证时间</th>
+                                            <th>最后验证时间</th>
+                                            <th>剩余访问次数</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="verificationTableBody">
+                                        <tr>
+                                            <td colspan="6" class="has-text-centered py-5">
+                                                <span class="icon is-large">
+                                                    <i class="fas fa-spinner fa-pulse"></i>
+                                                </span>
+                                                <p>加载中...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <nav id="verificationPagination" class="pagination is-centered" role="navigation" aria-label="pagination">
+                                <!-- 分页按钮将由JavaScript动态生成 -->
+                            </nav>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -164,59 +644,127 @@
     </div>
 
     <!-- 订单详情模态框 -->
-    <div id="orderModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>订单详情</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
+    <div id="orderModal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">
+                    <span class="icon"><i class="fas fa-info-circle"></i></span>
+                    <span>订单详情</span>
+                </p>
+                <button class="delete" aria-label="close" onclick="closeModal('orderModal')"></button>
+            </header>
+            <section class="modal-card-body">
                 <div id="orderDetails"></div>
-            </div>
+            </section>
         </div>
     </div>
 
     <!-- 编辑订单模态框 -->
-    <div id="editModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>编辑订单</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
+    <div id="editModal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">
+                    <span class="icon"><i class="fas fa-edit"></i></span>
+                    <span>编辑订单</span>
+                </p>
+                <button class="delete" aria-label="close" onclick="closeModal('editModal')"></button>
+            </header>
+            <section class="modal-card-body">
                 <form id="editForm">
-                    <div class="form-group">
-                        <label for="editOrderNumber">订单号</label>
-                        <input type="text" id="editOrderNumber" readonly>
+                    <div class="field">
+                        <label for="editOrderNumber" class="label">订单号</label>
+                        <div class="control">
+                            <input type="text" id="editOrderNumber" class="input" readonly>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="editMaxAccess">最大访问次数</label>
-                        <input type="number" id="editMaxAccess" min="1" placeholder="留空表示无限制">
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary modal-cancel">取消</button>
-                        <button type="submit" class="btn btn-primary">保存</button>
+                    <div class="field">
+                        <label for="editMaxAccess" class="label">最大访问次数</label>
+                        <div class="control">
+                            <input type="number" id="editMaxAccess" class="input" min="1"
+                                placeholder="留空表示无限制">
+                        </div>
                     </div>
                 </form>
-            </div>
+            </section>
+            <footer class="modal-card-foot">
+                <button type="button" class="button" onclick="closeModal('editModal')">取消</button>
+                <button type="submit" form="editForm" class="button is-primary">保存</button>
+            </footer>
         </div>
     </div>
 
     <!-- 确认删除模态框 -->
-    <div id="deleteModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>确认删除</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>确定要删除订单 <strong id="deleteOrderNumber"></strong> 吗？</p>
-                <p class="warning">此操作将同时删除该订单的所有使用记录，且无法恢复！</p>
-                <div class="modal-actions">
-                    <button class="btn btn-secondary modal-cancel">取消</button>
-                    <button id="confirmDeleteBtn" class="btn btn-danger">确认删除</button>
+    <div id="deleteModal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">
+                    <span class="icon has-text-danger"><i class="fas fa-exclamation-triangle"></i></span>
+                    <span>确认删除</span>
+                </p>
+                <button class="delete" aria-label="close" onclick="closeModal('deleteModal')"></button>
+            </header>
+            <section class="modal-card-body">
+                <div class="content">
+                    <p>确定要删除订单 <strong id="deleteOrderNumber" class="has-text-danger"></strong> 吗？</p>
+                    <div class="notification is-danger">
+                        <span class="icon"><i class="fas fa-exclamation-circle"></i></span>
+                        <span>此操作将同时删除该订单的所有使用记录，且无法恢复！</span>
+                    </div>
                 </div>
-            </div>
+            </section>
+            <footer class="modal-card-foot">
+                <button type="button" class="button" onclick="closeModal('deleteModal')">取消</button>
+                <button id="confirmDeleteBtn" class="button is-danger">确认删除</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- 验证记录详情模态框 -->
+    <div id="verificationDetailsModal" class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card" style="width: 90vw; max-width: 1200px;">
+            <header class="modal-card-head">
+                <p class="modal-card-title">
+                    <span class="icon"><i class="fas fa-history"></i></span>
+                    <span>验证记录详情 - <span id="verificationOrderNumber" class="has-text-info"></span></span>
+                </p>
+                <button class="delete" aria-label="close" onclick="closeModal('verificationDetailsModal')"></button>
+            </header>
+            <section class="modal-card-body">
+                <div id="verificationOrderInfo" class="box"></div>
+
+                <div class="records-section">
+                    <h4 class="title is-5 mb-4">详细验证记录</h4>
+                    <div class="level mb-4">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <span id="verificationRecordsInfo" class="tag is-info"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="verificationRecordsTable" class="table is-fullwidth is-striped is-hoverable">
+                            <thead>
+                                <tr>
+                                    <th>验证时间</th>
+                                    <th>IP地址</th>
+                                    <th>设备ID</th>
+                                    <th>会话ID</th>
+                                    <th>用户代理</th>
+                                </tr>
+                            </thead>
+                            <tbody id="verificationRecordsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav id="verificationRecordsPagination" class="pagination is-centered" role="navigation" aria-label="pagination">
+                        <!-- 分页按钮将由JavaScript动态生成 -->
+                    </nav>
+                </div>
+            </section>
         </div>
     </div>
 

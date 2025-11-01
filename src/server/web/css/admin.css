@@ -1,359 +1,332 @@
 /* ============================================================
-   Apple 风格订单管理系统 - 统一宽度优化版
-   优化内容：
-   1. 修复导航宽度不一致 (去掉 fit-content 限制)
-   2. 统一 Header / Main / Card 容器宽度
-   3. 改善表单和响应式体验
+   订单管理系统 - 基于 Bulma CSS 框架的现代化样式
+   全面使用 Bulma 组件和配色方案
    ============================================================ */
 
-/* Apple 风格设计系统 - 颜色变量 */
-:root {
-    /* Apple 主要色彩 */
-    --apple-blue: #007aff;
-    --apple-green: #34c759;
-    --apple-orange: #ff9500;
-    --apple-red: #ff3b30;
-    --apple-yellow: #ffcc00;
-    --apple-purple: #af52de;
-
-    /* 中性色调系统 */
-    --gray-50: #f2f2f7;
-    --gray-100: #e5e5ea;
-    --gray-200: #d1d1d6;
-    --gray-300: #c7c7cc;
-    --gray-400: #aeaeb2;
-    --gray-500: #8e8e93;
-    --gray-600: #636366;
-    --gray-700: #48484a;
-    --gray-800: #3a3a3c;
-    --gray-900: #1c1c1e;
-
-    /* 圆角系统 */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-
-    /* 阴影系统 */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.04);
-    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.08);
-
-    /* 响应式断点 */
-    --breakpoint-sm: 640px;
-    --breakpoint-md: 768px;
-    --breakpoint-lg: 1024px;
-    --breakpoint-xl: 1280px;
-
-    /* 页面容器统一宽度 */
-    --container-max: 1120px;
-}
-
-/* 基础样式重置 */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-        sans-serif;
-    background-color: var(--gray-50);
-    color: var(--gray-900);
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-}
-
-/* 工具类 */
-.hidden {
-    display: none !important;
-}
-.loading {
-    text-align: center;
-    color: #666;
-    font-style: italic;
-}
-.flex-1 {
-    flex: 1;
-}
-
-/* 消息样式 */
-.message {
-    margin-top: 12px;
-    padding: 12px 16px;
-    border-radius: var(--radius-md);
-    font-size: 14px;
-    font-weight: 500;
-    box-shadow: var(--shadow-sm);
-}
-.message.success {
-    background-color: rgba(52, 199, 89, 0.1);
-    color: var(--apple-green);
-    border-left: 4px solid var(--apple-green);
-}
-.message.error {
-    background-color: rgba(255, 59, 48, 0.1);
-    color: var(--apple-red);
-    border-left: 4px solid var(--apple-red);
-}
-.message.warning {
-    background-color: rgba(255, 149, 0, 0.1);
-    color: var(--apple-orange);
-    border-left: 4px solid var(--apple-orange);
-}
-
-/* 按钮 */
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: var(--shadow-sm);
-    min-height: 44px;
-}
-.btn:active {
-    transform: scale(0.98);
-}
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.btn-primary {
-    background-color: var(--apple-blue);
-    color: white;
-}
-.btn-primary:hover {
-    background-color: #0051d5;
-    box-shadow: var(--shadow-md);
-}
-.btn-secondary {
-    background-color: var(--gray-200);
-    color: var(--gray-800);
-}
-.btn-danger {
-    background-color: var(--apple-red);
-    color: white;
-}
-
-/* 表单 */
-.form-group {
-    margin-bottom: 20px;
-}
-.form-row {
-    display: flex;
-    gap: 16px;
-    align-items: flex-end;
-    flex-wrap: wrap;
-}
-.form-row .form-group {
-    flex: 1 1 0;
-    min-width: 240px;
-}
-
-input,
-textarea,
-select {
-    width: 100%;
-    padding: 12px 16px;
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius-md);
-    font-size: 16px;
-    box-shadow: var(--shadow-sm);
-    background-color: white;
-}
-input:focus,
-textarea:focus,
-select:focus {
-    outline: none;
-    border-color: var(--apple-blue);
-    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1), var(--shadow-md);
-}
-
-/* 登录界面 */
-#loginScreen {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: linear-gradient(
-        135deg,
-        rgba(0, 122, 255, 0.95) 0%,
-        rgba(88, 86, 214, 0.9) 50%,
-        rgba(175, 82, 222, 0.85) 100%
-    );
-}
-.login-container {
-    max-width: 420px;
-    width: 100%;
-    padding: 24px;
-}
-.login-card {
-    background: rgba(255, 255, 255, 0.98);
-    border-radius: var(--radius-xl);
-    padding: 48px 40px;
-    box-shadow: var(--shadow-xl);
-    text-align: center;
-}
-
-/* 主界面 */
-#adminScreen {
-    background-color: var(--gray-50);
-    min-height: 100vh;
-}
-
-.admin-header {
-    background: rgba(255, 255, 255, 0.95);
-    border-bottom: 1px solid var(--gray-200);
-    box-shadow: var(--shadow-sm);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-.header-content {
-    max-width: var(--container-max);
-    margin: 0 auto;
-    padding: 0 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 72px;
-}
-.admin-main {
-    max-width: var(--container-max);
-    margin: 0 auto;
-    padding: 24px;
-}
-
-/* 导航条 - 修复宽度问题 */
-.admin-nav {
-    display: flex;
-    width: 100%;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: var(--radius-lg);
-    padding: 6px;
-    margin-bottom: 24px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-200);
-}
-.nav-btn {
-    flex: 1;
-    padding: 14px 24px;
-    border: none;
-    background: transparent;
-    color: var(--gray-600);
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: var(--radius-md);
-    transition: all 0.3s ease;
-}
-.nav-btn.active {
-    background-color: var(--apple-blue);
-    color: white;
-    transform: translateY(-1px);
-}
-
-/* 标签页 */
-.tab-content {
+/* 标签页内容切换 */
+.content-section {
     display: none;
 }
-.tab-content.active {
+
+.content-section:not(.is-hidden) {
     display: block;
-    animation: fadeIn 0.3s ease;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
+/* 标签页样式 - 让标准的 Bulma tabs 更明显 */
+.tabs.is-boxed li {
+    background-color: #f5f5f5;
+    border-color: #dbdbdb;
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.tabs.is-boxed li.is-active {
+    background-color: white;
+    border-color: #3273dc;
+    border-bottom-color: transparent;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.tabs.is-boxed li a {
+    border-bottom: none;
+    color: #4a4a4a;
+    font-weight: 500;
+}
+
+.tabs.is-boxed li.is-active a {
+    color: #3273dc;
+    border-bottom: none;
+}
+
+.tabs.is-boxed li:not(.is-active):hover a {
+    color: #363636;
+    background-color: #fafafa;
+}
+
+/* 卡片阴影增强 */
+.card.has-shadow {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border: none;
+}
+
+/* 表格头部样式增强 */
+.table thead th {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #f5f5f5;
+}
+
+/* 按钮悬停效果增强 */
+.button:hover {
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+.button:active {
+    transform: translateY(0);
+}
+
+/* 导航栏样式 */
+.navbar.is-info {
+    background: linear-gradient(135deg, #209cee 0%, #3273dc 100%);
+}
+
+/* 为标签页添加更多间距 */
+.tabs.is-boxed.is-fullwidth {
+    margin-bottom: 2rem;
+}
+
+/* 导航响应式修复 */
+.navbar-menu {
+    padding-right: 1rem;
+}
+
+/* 表格加载状态 */
+.table-loading {
+    text-align: center;
+    padding: 2rem;
+    color: #7a7a7a;
+}
+
+/* 使用次数样式 */
+.usage-count {
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+    color: #363636;
+}
+
+.usage-count.high-usage {
+    background-color: #ff9500;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+/* 剩余访问次数样式 */
+.remaining-access {
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.remaining-access.unlimited {
+    background-color: #23d160;
+    color: white;
+}
+
+.remaining-access.warning {
+    background-color: #ff9500;
+    color: white;
+}
+
+.remaining-access.normal {
+    background-color: #f5f5f5;
+    color: #363636;
+}
+
+/* 高验证次数的视觉强调 */
+.high-usage-row {
+    background-color: rgba(255, 149, 0, 0.05);
+    border-left: 3px solid #ff9500;
+}
+
+/* 验证记录搜索结果高亮 */
+.search-highlight {
+    background-color: rgba(50, 115, 220, 0.1);
+    border: 1px solid #3273dc;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+/* 用户代理列样式 */
+.user-agent {
+    max-width: 300px;
+    word-break: break-all;
+    font-size: 0.9em;
+    color: #4a4a4a;
+    line-height: 1.4;
+}
+
+/* 模态框关闭函数将通过 JavaScript 在全局作用域中定义 */
+
+/* 移动端响应式调整 */
+@media screen and (max-width: 768px) {
+    .modal-card {
+        width: 95vw;
+        max-width: none;
+        margin: 1rem;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+
+    .tabs.is-boxed ul {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tabs.is-boxed ul li {
+        flex-shrink: 0;
     }
 }
 
-/* 卡片统一宽度 */
-.card {
-    background: rgba(255, 255, 255, 0.98);
-    border-radius: var(--radius-lg);
-    padding: 32px;
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--gray-200);
-    width: 100%;
+/* 表格分页按钮样式 */
+.pagination .pagination-link.is-current {
+    background-color: #3273dc;
+    border-color: #3273dc;
+    color: #fff;
 }
 
-/* 表格 */
-.table-container {
-    overflow-x: auto;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: var(--shadow-sm);
-    width: 100%;
-}
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-th,
-td {
-    padding: 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--gray-200);
-}
-th {
-    background-color: var(--gray-50);
-    font-weight: 700;
-    color: var(--gray-700);
-}
-tr:hover {
-    background-color: var(--gray-50);
+/* 表单验证状态 */
+.is-danger {
+    border-color: #ff3860 !important;
 }
 
-/* 分页 */
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    margin-top: 24px;
-    flex-wrap: wrap;
-    width: 100%;
+.is-success {
+    border-color: #23d160 !important;
 }
 
-/* 模态框 */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+/* 加载动画 */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3273dc;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
-/* 响应式 */
-@media (max-width: 640px) {
-    .admin-nav {
-        flex-direction: column;
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 按钮组间距 */
+.buttons .button:not(:last-child) {
+    margin-right: 0.5rem;
+}
+
+/* 标签样式增强 */
+.tag {
+    font-weight: 500;
+}
+
+/* 通知消息增强 */
+.notification {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 表格行悬停效果 */
+.table.is-hoverable tbody tr:hover {
+    background-color: rgba(50, 115, 220, 0.05);
+}
+
+/* 卡片内容间距增强 */
+.card-content {
+    padding: 1.5rem;
+}
+
+.box {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 确保主要内容区域有足够的顶部间距 */
+.container.is-fluid.mt-4 {
+    padding-top: 1rem;
+}
+
+/* 修复导航栏和内容之间的间距 */
+.navbar {
+    margin-bottom: 0;
+}
+
+/* 针对验证记录表格的特定样式 */
+#verificationTable th:nth-child(2),
+#verificationTable td:nth-child(2) {
+    text-align: center;
+    font-weight: 600;
+}
+
+#verificationTable th:nth-child(5),
+#verificationTable td:nth-child(5) {
+    text-align: center;
+}
+
+/* 详情模态框表格样式 */
+#verificationRecordsTable {
+    table-layout: fixed;
+}
+
+#verificationRecordsTable th:nth-child(1) {
+    width: 140px;
+}
+
+#verificationRecordsTable th:nth-child(2) {
+    width: 120px;
+}
+
+#verificationRecordsTable th:nth-child(3) {
+    width: 100px;
+}
+
+#verificationRecordsTable th:nth-child(4) {
+    width: 100px;
+}
+
+#verificationRecordsTable th:nth-child(5) {
+    width: auto;
+}
+
+/* 移动端表格响应式 */
+@media screen and (max-width: 768px) {
+    #verificationRecordsTable,
+    #verificationRecordsTable thead,
+    #verificationRecordsTable tbody,
+    #verificationRecordsTable th,
+    #verificationRecordsTable td,
+    #verificationRecordsTable tr {
+        display: block;
     }
-    .nav-btn {
-        width: 100%;
+
+    #verificationRecordsTable thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
     }
-    .form-row {
-        flex-direction: column;
-        gap: 0;
+
+    #verificationRecordsTable tr {
+        border: 1px solid #dbdbdb;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+        background-color: #fafafa;
+    }
+
+    #verificationRecordsTable td {
+        border: none;
+        position: relative;
+        padding-left: 40%;
+        text-align: left;
+        white-space: normal;
+    }
+
+    #verificationRecordsTable td:before {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        width: 35%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: bold;
+        content: attr(data-label);
     }
 }

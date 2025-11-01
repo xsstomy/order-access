@@ -65,6 +65,11 @@ async function initializeDatabase() {
       CREATE INDEX IF NOT EXISTS idx_order_usage_device_id ON order_usage(device_id)
     `);
 
+    // 创建访问时间索引，优化验证记录的时间范围查询
+    await dbManager.run(`
+      CREATE INDEX IF NOT EXISTS idx_order_usage_accessed_at ON order_usage(accessed_at)
+    `);
+
     console.log('数据库初始化完成');
     return true;
   } catch (error) {

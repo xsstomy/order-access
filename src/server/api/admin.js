@@ -518,6 +518,260 @@ router.post('/orders/batch-add', requireAdminAuth, apiRateLimiter, async (req, r
   }
 });
 
+// ============ 订单验证记录查询功能 ============
+
+// 获取订单验证记录统计
+router.get('/verification-stats', requireAdminAuth, apiRateLimiter, async (req, res) => {
+  console.log('🔍 验证记录统计API被调用');
+  console.log('📥 请求查询参数:', req.query);
+
+  // 禁用ETag缓存，解决304 Not Modified问题
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('ETag', '');
+
+  try {
+    const { page = 1, limit = 20, sortBy = 'usageCount', sortOrder = 'desc', orderNumber, dateFrom, dateTo } = req.query;
+
+    console.log('📊 解析后的参数:', {
+      page, limit, sortBy, sortOrder, orderNumber, dateFrom, dateTo
+    });
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
+
+    console.log('📈 分页计算:', { pageNum, limitNum, offset });
+
+    const dbManager = require('../../config/database');
+    console.log('🗄️ 数据库管理器已加载');
+
+    // 构建WHERE条件
+    let whereConditions = [];
+    let params = [];
+
+    if (orderNumber) {
+      console.log('🔍 添加订单号筛选:', orderNumber);
+      whereConditions.push('ou.order_number LIKE ?');
+      params.push(`%${orderNumber}%`);
+    }
+
+    if (dateFrom) {
+      console.log('🔍 添加开始日期筛选:', dateFrom);
+      // 验证日期范围不超过1年
+      const fromDate = new Date(dateFrom);
+      const maxDateFrom = new Date();
+      maxDateFrom.setFullYear(maxDateFrom.getFullYear() - 1);
+
+      if (fromDate < maxDateFrom) {
+        console.log('❌ 日期范围超过1年限制:', dateFrom);
+        return res.json({
+          success: false,
+          message: '开始日期不能超过1年前'
+        });
+      }
+
+      whereConditions.push('ou.accessed_at >= ?');
+      params.push(dateFrom);
+    }
+
+    if (dateTo) {
+      console.log('🔍 添加结束日期筛选:', dateTo);
+      whereConditions.push('ou.accessed_at <= ?');
+      params.push(dateTo);
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+    console.log('📝 WHERE子句:', whereClause);
+    console.log('📝 查询参数:', params);
+
+    // 构建排序条件
+    const validSortBy = ['usageCount', 'firstAccess', 'lastAccess', 'orderNumber'];
+    const validSortOrder = ['asc', 'desc'];
+    const finalSortBy = validSortBy.includes(sortBy) ? sortBy : 'usageCount';
+    const finalSortOrder = validSortOrder.includes(sortOrder) ? sortOrder : 'desc';
+
+    console.log('🏷️ 排序参数:', { finalSortBy, finalSortOrder });
+
+    let orderClause;
+    switch (finalSortBy) {
+      case 'usageCount':
+        orderClause = `ORDER BY COUNT(*) ${finalSortOrder.toUpperCase()}`;
+        break;
+      case 'firstAccess':
+        orderClause = `ORDER BY MIN(ou.accessed_at) ${finalSortOrder.toUpperCase()}`;
+        break;
+      case 'lastAccess':
+        orderClause = `ORDER BY MAX(ou.accessed_at) ${finalSortOrder.toUpperCase()}`;
+        break;
+      case 'orderNumber':
+        orderClause = `ORDER BY ou.order_number ${finalSortOrder.toUpperCase()}`;
+        break;
+      default:
+        orderClause = 'ORDER BY COUNT(*) DESC';
+    }
+
+    console.log('📊 ORDER BY子句:', orderClause);
+
+    // 查询验证记录统计
+    console.log('🔍 开始执行统计查询...');
+    const stats = await dbManager.all(`
+      SELECT
+        ou.order_number,
+        COUNT(*) as usage_count,
+        MIN(ou.accessed_at) as first_access,
+        MAX(ou.accessed_at) as last_access,
+        mo.created_at as order_created_at,
+        mo.max_access
+      FROM order_usage ou
+      LEFT JOIN multi_orders mo ON ou.order_number = mo.order_number
+      ${whereClause}
+      GROUP BY ou.order_number
+      ${orderClause}
+      LIMIT ? OFFSET ?
+    `, [...params, limitNum, offset]);
+
+    console.log('📈 统计查询结果:', {
+      记录数量: stats.length,
+      前几条数据: stats.slice(0, 3)
+    });
+
+    // 获取总数
+    console.log('🔢 开始执行总数查询...');
+    const totalResult = await dbManager.get(`
+      SELECT COUNT(DISTINCT ou.order_number) as total
+      FROM order_usage ou
+      LEFT JOIN multi_orders mo ON ou.order_number = mo.order_number
+      ${whereClause}
+    `, params);
+
+    const { total } = totalResult || { total: 0 };
+    console.log('🔢 总数查询结果:', total);
+
+    console.log('🎯 准备返回响应数据...');
+    const responseData = {
+      success: true,
+      stats: stats.map(stat => ({
+        orderNumber: stat.order_number,
+        usageCount: stat.usage_count,
+        firstAccess: stat.first_access,
+        lastAccess: stat.last_access,
+        orderCreatedAt: stat.order_created_at,
+        maxAccess: stat.max_access,
+        remainingAccess: stat.max_access === null ? -1 : Math.max(0, stat.max_access - stat.usage_count)
+      })),
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum)
+      },
+      filters: {
+        orderNumber: orderNumber || '',
+        dateFrom: dateFrom || '',
+        dateTo: dateTo || '',
+        sortBy: finalSortBy,
+        sortOrder: finalSortOrder
+      }
+    };
+
+    console.log('✅ 响应数据准备完成:', {
+      success: responseData.success,
+      stats数量: responseData.stats.length,
+      pagination: responseData.pagination,
+      filters: responseData.filters
+    });
+
+    return res.json(responseData);
+
+  } catch (error) {
+    console.error('获取验证记录统计失败:', error);
+    return res.json({
+      success: false,
+      message: '获取验证记录统计失败'
+    });
+  }
+});
+
+// 获取订单的详细验证记录
+router.get('/verification-records/:orderNumber', requireAdminAuth, apiRateLimiter, async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+    const { page = 1, limit = 50 } = req.query;
+
+    if (!orderNumber) {
+      return res.json({
+        success: false,
+        message: '订单号不能为空'
+      });
+    }
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
+
+    const dbManager = require('../../config/database');
+
+    // 查询验证记录
+    const records = await dbManager.all(`
+      SELECT
+        id,
+        ip_address,
+        user_agent,
+        device_id,
+        session_id,
+        accessed_at
+      FROM order_usage
+      WHERE order_number = ?
+      ORDER BY accessed_at DESC
+      LIMIT ? OFFSET ?
+    `, [orderNumber.trim(), limitNum, offset]);
+
+    // 获取总数
+    const countResult = await dbManager.get('SELECT COUNT(*) as total FROM order_usage WHERE order_number = ?', [orderNumber.trim()]);
+    const { total } = countResult || { total: 0 };
+
+    // 获取订单基本信息
+    const orderInfo = await dbManager.get(`
+      SELECT
+        mo.created_at as order_created_at,
+        mo.max_access
+      FROM multi_orders mo
+      WHERE mo.order_number = ?
+    `, [orderNumber.trim()]);
+
+    return res.json({
+      success: true,
+      orderNumber: orderNumber.trim(),
+      orderInfo: orderInfo ? {
+        createdAt: orderInfo.order_created_at,
+        maxAccess: orderInfo.max_access
+      } : null,
+      records: records.map(record => ({
+        id: record.id,
+        ipAddress: record.ip_address,
+        userAgent: record.user_agent || '未知',
+        deviceId: record.device_id,
+        sessionId: record.session_id,
+        accessedAt: record.accessed_at
+      })),
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum)
+      }
+    });
+
+  } catch (error) {
+    console.error('获取验证记录详情失败:', error);
+    return res.json({
+      success: false,
+      message: '获取验证记录详情失败'
+    });
+  }
+});
+
+
 // ============ 文本文件导入功能 ============
 
 // 配置 multer 用于文件上传
