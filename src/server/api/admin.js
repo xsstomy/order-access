@@ -644,9 +644,15 @@ router.get(
         console.log("🔍 验证记录统计API被调用");
         console.log("📥 请求查询参数:", req.query);
 
-        // 禁用ETag缓存，解决304 Not Modified问题
-        res.set("Cache-Control", "no-cache, no-store, must-revalidate");
-        res.setHeader("ETag", "");
+        // 强化缓存控制，确保数据新鲜度
+        res.set("Cache-Control", "no-cache, no-store, must-revalidate, private, max-age=0");
+        res.setHeader("ETag", ""); // 禁用ETag
+        res.setHeader("Pragma", "no-cache"); // HTTP/1.0 兼容
+        res.setHeader("Expires", "0"); // 立即过期
+
+        // 添加数据新鲜度时间戳
+        const queryStartTime = new Date().toISOString();
+        console.log("🕐 查询开始时间:", queryStartTime);
 
         try {
             const {
@@ -709,8 +715,11 @@ router.get(
 
             if (dateTo) {
                 console.log("🔍 添加结束日期筛选:", dateTo);
+                // 修复：将结束日期扩展到当天的23:59:59，确保包含当天的所有记录
+                const endDateTime = dateTo + " 23:59:59";
                 whereConditions.push("ou.accessed_at <= ?");
-                params.push(dateTo);
+                params.push(endDateTime);
+                console.log("🔧 修复后的结束时间:", endDateTime);
             }
 
             const whereClause =
@@ -799,8 +808,20 @@ router.get(
             console.log("🔢 总数查询结果:", total);
 
             console.log("🎯 准备返回响应数据...");
+
+            // 计算查询完成时间
+            const queryEndTime = new Date().toISOString();
+            const queryDuration = new Date(queryEndTime) - new Date(queryStartTime);
+
             const responseData = {
                 success: true,
+                // 添加数据新鲜度信息
+                dataFreshness: {
+                    queryStartTime: queryStartTime,
+                    queryEndTime: queryEndTime,
+                    queryDurationMs: queryDuration,
+                    message: "实时数据，每次请求均从数据库获取最新记录"
+                },
                 stats: stats.map((stat) => ({
                     orderNumber: stat.order_number,
                     usageCount: stat.usage_count,
@@ -833,14 +854,30 @@ router.get(
                 stats数量: responseData.stats.length,
                 pagination: responseData.pagination,
                 filters: responseData.filters,
+                dataFreshness: responseData.dataFreshness,
             });
+
+            // 添加最终响应时间戳
+            res.set('X-Response-Time', queryEndTime);
+            res.set('X-Query-Duration', `${queryDuration}ms`);
 
             return res.json(responseData);
         } catch (error) {
             console.error("获取验证记录统计失败:", error);
+
+            // 确保错误响应也包含缓存控制头
+            res.set("Cache-Control", "no-cache, no-store, must-revalidate, private, max-age=0");
+            res.setHeader("ETag", "");
+            res.setHeader("Pragma", "no-cache");
+            res.setHeader("Expires", "0");
+
             return res.json({
                 success: false,
                 message: "获取验证记录统计失败",
+                error: {
+                    timestamp: new Date().toISOString(),
+                    details: error.message
+                }
             });
         }
     }

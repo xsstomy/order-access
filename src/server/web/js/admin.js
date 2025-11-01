@@ -134,11 +134,22 @@ class AdminInterface {
         console.log('📤 请求选项:', options);
 
         try {
+            // 为验证统计API添加缓存破坏参数
+            if (url.includes('/verification-stats')) {
+                const timestamp = Date.now();
+                const separator = url.includes('?') ? '&' : '?';
+                url = `${url}${separator}_t=${timestamp}`;
+                console.log('🔄 添加缓存破坏参数:', url);
+            }
+
             const response = await fetch(url, {
                 headers: {
                     'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache',
                     ...options.headers
                 },
+                cache: 'no-store', // 禁用浏览器缓存
                 ...options
             });
 
@@ -832,13 +843,25 @@ class AdminInterface {
 
             if (data.success) {
                 this.currentVerificationPage = page;
+
+                // 显示数据新鲜度信息
+                if (data.dataFreshness) {
+                    console.log('📊 数据新鲜度信息:', data.dataFreshness);
+                    this.displayDataFreshnessInfo(data.dataFreshness);
+                }
+
                 this.renderVerificationTable(data.stats);
                 this.renderPagination(
                     data.pagination,
                     document.getElementById('verificationPagination'),
                     (newPage) => this.loadVerificationRecords(newPage)
                 );
-                infoEl.textContent = `共 ${data.pagination.total} 个订单有验证记录`;
+
+                // 更新页面信息，包含时间戳
+                const lastUpdateTime = data.dataFreshness?.queryEndTime
+                    ? new Date(data.dataFreshness.queryEndTime).toLocaleString('zh-CN')
+                    : new Date().toLocaleString('zh-CN');
+                infoEl.innerHTML = `共 ${data.pagination.total} 个订单有验证记录 <small>(最后更新: ${lastUpdateTime})</small>`;
                 this.hideMessage(messageEl);
             } else {
                 console.error('验证记录API返回失败:', data.message);
@@ -855,6 +878,33 @@ class AdminInterface {
             if (errorInfo.type !== 'auth') {
                 this.showMessage(messageEl, errorInfo.message, 'error');
             }
+        }
+    }
+
+    // 显示数据新鲜度信息
+    displayDataFreshnessInfo(dataFreshness) {
+        const freshnessInfoEl = document.getElementById('dataFreshnessInfo');
+        if (!freshnessInfoEl) {
+            // 如果元素不存在，创建它
+            const infoEl = document.getElementById('verificationInfo');
+            if (infoEl) {
+                const freshnessDiv = document.createElement('div');
+                freshnessDiv.id = 'dataFreshnessInfo';
+                freshnessDiv.style.cssText = 'font-size: 0.85em; color: #666; margin-top: 5px;';
+                infoEl.parentNode.insertBefore(freshnessDiv, infoEl.nextSibling);
+                freshnessInfoEl = freshnessDiv;
+            }
+        }
+
+        if (freshnessInfoEl && dataFreshness) {
+            const queryTime = new Date(dataFreshness.queryEndTime).toLocaleString('zh-CN');
+            const duration = dataFreshness.queryDurationMs;
+
+            freshnessInfoEl.innerHTML = `
+                📊 ${dataFreshness.message} |
+                查询时间: ${queryTime} |
+                耗时: ${duration}ms
+            `;
         }
     }
 
