@@ -245,13 +245,13 @@ const verificationElements = {
 // 验证订单号 - 使用新的API模块
 async function verifyOrder(orderNumber) {
     try {
-        uiManager.showLoading('submitBtn', true);
+        uiManager.showLoading("submitBtn", true);
         uiManager.hideMessages();
 
         const result = await api.verifyOrder(orderNumber);
 
         if (result.success) {
-            uiManager.showMessage('success', '验证成功！正在跳转...');
+            uiManager.showMessage("success", "验证成功！正在跳转...");
 
             // 更新UI状态
             if (result.sessionId) {
@@ -259,7 +259,8 @@ async function verifyOrder(orderNumber) {
                     sessionId: result.sessionId,
                     orderNumber: orderNumber,
                     expiresAt: new Date(result.sessionExpiresAt),
-                    remainingTime: new Date(result.sessionExpiresAt) - new Date()
+                    remainingTime:
+                        new Date(result.sessionExpiresAt) - new Date(),
                 };
                 uiManager.updateSessionStatus(sessionData);
             }
@@ -270,13 +271,16 @@ async function verifyOrder(orderNumber) {
                 loadTutorialContent(); // 加载教程内容
             }, 1500);
         } else {
-            uiManager.showMessage('error', result.message || "订单号无效或已过期");
+            uiManager.showMessage(
+                "error",
+                result.message || "订单号无效或已过期"
+            );
         }
     } catch (error) {
         console.error("验证请求失败:", error);
-        uiManager.showMessage('error', "网络错误，请稍后重试");
+        uiManager.showMessage("error", "访问频繁，请稍后重试");
     } finally {
-        uiManager.showLoading('submitBtn', false);
+        uiManager.showLoading("submitBtn", false);
     }
 }
 
@@ -291,7 +295,7 @@ async function checkSessionStatus() {
                 sessionId: result.data.sessionId,
                 orderNumber: result.data.orderNumber,
                 expiresAt: new Date(result.data.expiresAt),
-                remainingTime: result.data.remainingTime
+                remainingTime: result.data.remainingTime,
             });
             dismissOverlay(); // 关闭教程提示覆盖层
             await loadTutorialContent(); // 加载教程内容
@@ -310,19 +314,19 @@ async function refreshSession() {
         const result = await api.refreshSession();
 
         if (result.success && result.data) {
-            uiManager.showMessage('success', '会话已刷新');
+            uiManager.showMessage("success", "会话已刷新");
             uiManager.updateSessionStatus({
                 sessionId: api.getSessionId(),
                 expiresAt: new Date(result.data.expiresAt),
-                remainingTime: result.data.remainingTime
+                remainingTime: result.data.remainingTime,
             });
             setTimeout(() => uiManager.hideMessages(), 2000);
         } else {
-            uiManager.showMessage('error', result.message || "刷新会话失败");
+            uiManager.showMessage("error", result.message || "刷新会话失败");
         }
     } catch (error) {
         console.error("刷新会话失败:", error);
-        uiManager.showMessage('error', "网络错误，请稍后重试");
+        uiManager.showMessage("error", "访问频繁，请稍后重试");
     }
 }
 
@@ -346,7 +350,9 @@ async function loadTutorialContent() {
 
             // 如果有账号信息，更新账号显示
             if (tutorialResult.data.sections) {
-                const step2Section = tutorialResult.data.sections.find(s => s.id === 'step2');
+                const step2Section = tutorialResult.data.sections.find(
+                    (s) => s.id === "step2"
+                );
                 if (step2Section && step2Section.accounts) {
                     uiManager.updateAccounts(step2Section.accounts);
                 }
@@ -361,17 +367,21 @@ async function loadTutorialContent() {
 function bindEvents() {
     // 验证表单提交
     if (verificationElements.verificationForm) {
-        verificationElements.verificationForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const orderNumber = verificationElements.orderNumberInput.value.trim();
+        verificationElements.verificationForm.addEventListener(
+            "submit",
+            async (e) => {
+                e.preventDefault();
+                const orderNumber =
+                    verificationElements.orderNumberInput.value.trim();
 
-            if (!orderNumber) {
-                uiManager.showMessage('error', "请输入订单号");
-                return;
+                if (!orderNumber) {
+                    uiManager.showMessage("error", "请输入订单号");
+                    return;
+                }
+
+                await verifyOrder(orderNumber);
             }
-
-            await verifyOrder(orderNumber);
-        });
+        );
     }
 
     // 退出登录
@@ -381,13 +391,20 @@ function bindEvents() {
 
     // 刷新会话
     if (verificationElements.refreshSessionBtn) {
-        verificationElements.refreshSessionBtn.addEventListener("click", refreshSession);
+        verificationElements.refreshSessionBtn.addEventListener(
+            "click",
+            refreshSession
+        );
     }
 
     // 输入框焦点事件
     if (verificationElements.orderNumberInput) {
-        verificationElements.orderNumberInput.addEventListener("focus", () => uiManager.hideMessages());
-        verificationElements.orderNumberInput.addEventListener("input", () => uiManager.hideMessages());
+        verificationElements.orderNumberInput.addEventListener("focus", () =>
+            uiManager.hideMessages()
+        );
+        verificationElements.orderNumberInput.addEventListener("input", () =>
+            uiManager.hideMessages()
+        );
     }
 }
 
@@ -407,7 +424,9 @@ async function initVerificationSystem() {
         verificationElements.orderNumberInput.value = orderNumber.trim();
         // 延迟一点再自动验证，确保页面完全加载
         setTimeout(() => {
-            verificationElements.verificationForm.dispatchEvent(new Event("submit"));
+            verificationElements.verificationForm.dispatchEvent(
+                new Event("submit")
+            );
         }, 500);
     } else {
         // 检查会话状态

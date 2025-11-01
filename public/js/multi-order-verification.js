@@ -157,7 +157,7 @@ function showOverlay() {
 }
 
 // 点击遮罩时隐藏
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
     const goOnButton = document.getElementById("go-on-button");
     if (goOnButton) {
         goOnButton.addEventListener("click", dismissOverlay);
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 加载教程内容（占位函数，实际使用时会从原app.js调用）
 function loadTutorialContent() {
-    console.log('Tutorial content loaded');
+    console.log("Tutorial content loaded");
 }
 class MultiOrderVerification {
     constructor() {
@@ -185,7 +185,7 @@ class MultiOrderVerification {
     // 多次订单专用验证函数
     async verifyOrder(orderNumber) {
         try {
-            uiManager.showLoading('submitBtn', true);
+            uiManager.showLoading("submitBtn", true);
             uiManager.hideMessages();
 
             const result = await api.verifyOrder(orderNumber);
@@ -194,10 +194,18 @@ class MultiOrderVerification {
                 // 验证成功后，检查订单类型是否为多次订单
                 try {
                     // 使用 window 端点检查订单类型
-                    const orderTypeResult = await this.checkOrderType(orderNumber);
+                    const orderTypeResult = await this.checkOrderType(
+                        orderNumber
+                    );
 
-                    if (orderTypeResult.success && orderTypeResult.orderType === 'multi') {
-                        uiManager.showMessage('success', '多次订单验证成功！正在跳转...');
+                    if (
+                        orderTypeResult.success &&
+                        orderTypeResult.orderType === "multi"
+                    ) {
+                        uiManager.showMessage(
+                            "success",
+                            "多次订单验证成功！正在跳转..."
+                        );
 
                         // 更新UI状态
                         if (result.sessionId) {
@@ -205,49 +213,66 @@ class MultiOrderVerification {
                                 sessionId: result.sessionId,
                                 orderNumber: orderNumber,
                                 expiresAt: new Date(result.sessionExpiresAt),
-                                remainingTime: new Date(result.sessionExpiresAt) - new Date()
+                                remainingTime:
+                                    new Date(result.sessionExpiresAt) -
+                                    new Date(),
                             };
                             uiManager.updateSessionStatus(sessionData);
                         }
 
                         setTimeout(() => {
                             uiManager.hideVerificationOverlay();
-                            if (typeof dismissOverlay === 'function') {
+                            if (typeof dismissOverlay === "function") {
                                 dismissOverlay(); // 关闭原有的教程提示覆盖层
                             }
-                            if (typeof loadTutorialContent === 'function') {
+                            if (typeof loadTutorialContent === "function") {
                                 loadTutorialContent(); // 加载教程内容
                             }
                         }, 1500);
                     } else {
                         // 订单不是多次订单，显示专用错误消息
-                        uiManager.showMessage('error', '此页面仅支持多次订单验证，请联系客服获取多次订单权限');
-                        console.warn(`非多次订单尝试访问多次订单专用页面: ${orderNumber}, 类型: ${orderTypeResult.orderType || 'unknown'}`);
+                        uiManager.showMessage(
+                            "error",
+                            "此页面仅支持多次订单验证，请联系客服获取多次订单权限"
+                        );
+                        console.warn(
+                            `非多次订单尝试访问多次订单专用页面: ${orderNumber}, 类型: ${
+                                orderTypeResult.orderType || "unknown"
+                            }`
+                        );
 
                         // 清除已创建的会话，因为不应该允许访问
                         await api.logout();
                     }
                 } catch (typeCheckError) {
                     console.error("检查订单类型失败:", typeCheckError);
-                    uiManager.showMessage('error', '订单类型验证失败，请稍后重试');
+                    uiManager.showMessage(
+                        "error",
+                        "订单类型验证失败，请稍后重试"
+                    );
 
                     // 清除已创建的会话
                     await api.logout();
                 }
             } else {
-                uiManager.showMessage('error', result.message || "订单号无效或已过期");
+                uiManager.showMessage(
+                    "error",
+                    result.message || "订单号无效或已过期"
+                );
             }
         } catch (error) {
             console.error("验证请求失败:", error);
-            uiManager.showMessage('error', "网络错误，请稍后重试");
+            uiManager.showMessage("error", "访问频繁，请稍后重试");
         } finally {
-            uiManager.showLoading('submitBtn', false);
+            uiManager.showLoading("submitBtn", false);
         }
     }
 
     // 检查订单类型的辅助方法
     async checkOrderType(orderNumber) {
-        const response = await fetch(`${api.baseURL}/api/verify/window/${orderNumber}`);
+        const response = await fetch(
+            `${api.baseURL}/api/verify/window/${orderNumber}`
+        );
         const data = await response.json();
 
         if (!response.ok) {
@@ -269,13 +294,13 @@ class MultiOrderVerification {
                     sessionId: result.data.sessionId,
                     orderNumber: result.data.orderNumber,
                     expiresAt: new Date(result.data.expiresAt),
-                    remainingTime: result.data.remainingTime
+                    remainingTime: result.data.remainingTime,
                 });
 
-                if (typeof dismissOverlay === 'function') {
+                if (typeof dismissOverlay === "function") {
                     dismissOverlay();
                 }
-                if (typeof loadTutorialContent === 'function') {
+                if (typeof loadTutorialContent === "function") {
                     loadTutorialContent();
                 }
             } else {
@@ -292,13 +317,17 @@ class MultiOrderVerification {
     initializeEventListeners() {
         // 验证表单提交
         if (this.verificationElements.verificationForm) {
-            this.verificationElements.verificationForm.addEventListener("submit", async (e) => {
-                e.preventDefault();
-                const orderNumber = this.verificationElements.orderNumberInput.value.trim();
-                if (orderNumber) {
-                    await this.verifyOrder(orderNumber);
+            this.verificationElements.verificationForm.addEventListener(
+                "submit",
+                async (e) => {
+                    e.preventDefault();
+                    const orderNumber =
+                        this.verificationElements.orderNumberInput.value.trim();
+                    if (orderNumber) {
+                        await this.verifyOrder(orderNumber);
+                    }
                 }
-            });
+            );
         }
 
         // 复制账号密码按钮事件
@@ -309,49 +338,65 @@ class MultiOrderVerification {
 
         const copyPasswordBtn = document.getElementById("copyPasswordBtn");
         if (copyPasswordBtn) {
-            copyPasswordBtn.addEventListener("click", () => copyText("password"));
+            copyPasswordBtn.addEventListener("click", () =>
+                copyText("password")
+            );
         }
 
         // 退出登录
         if (this.verificationElements.logoutBtn) {
-            this.verificationElements.logoutBtn.addEventListener("click", async () => {
-                try {
-                    await api.logout();
-                    uiManager.showVerificationOverlay();
-                    uiManager.showMessage('success', '已安全退出');
-                } catch (error) {
-                    console.error("退出登录失败:", error);
-                    uiManager.showMessage('error', '退出失败，请稍后重试');
+            this.verificationElements.logoutBtn.addEventListener(
+                "click",
+                async () => {
+                    try {
+                        await api.logout();
+                        uiManager.showVerificationOverlay();
+                        uiManager.showMessage("success", "已安全退出");
+                    } catch (error) {
+                        console.error("退出登录失败:", error);
+                        uiManager.showMessage("error", "退出失败，请稍后重试");
+                    }
                 }
-            });
+            );
         }
 
         // 刷新会话
         if (this.verificationElements.refreshSessionBtn) {
-            this.verificationElements.refreshSessionBtn.addEventListener("click", async () => {
-                try {
-                    const result = await api.refreshSession();
-                    if (result.success) {
-                        const sessionData = {
-                            sessionId: result.sessionId,
-                            orderNumber: result.orderNumber,
-                            expiresAt: new Date(result.sessionExpiresAt),
-                            remainingTime: new Date(result.sessionExpiresAt) - new Date()
-                        };
-                        uiManager.updateSessionStatus(sessionData);
-                        uiManager.showMessage('success', '会话已刷新');
+            this.verificationElements.refreshSessionBtn.addEventListener(
+                "click",
+                async () => {
+                    try {
+                        const result = await api.refreshSession();
+                        if (result.success) {
+                            const sessionData = {
+                                sessionId: result.sessionId,
+                                orderNumber: result.orderNumber,
+                                expiresAt: new Date(result.sessionExpiresAt),
+                                remainingTime:
+                                    new Date(result.sessionExpiresAt) -
+                                    new Date(),
+                            };
+                            uiManager.updateSessionStatus(sessionData);
+                            uiManager.showMessage("success", "会话已刷新");
+                        }
+                    } catch (error) {
+                        console.error("刷新会话失败:", error);
+                        uiManager.showMessage("error", "刷新失败，请稍后重试");
                     }
-                } catch (error) {
-                    console.error("刷新会话失败:", error);
-                    uiManager.showMessage('error', '刷新失败，请稍后重试');
                 }
-            });
+            );
         }
 
         // 输入框事件
         if (this.verificationElements.orderNumberInput) {
-            this.verificationElements.orderNumberInput.addEventListener("focus", () => uiManager.hideMessages());
-            this.verificationElements.orderNumberInput.addEventListener("input", () => uiManager.hideMessages());
+            this.verificationElements.orderNumberInput.addEventListener(
+                "focus",
+                () => uiManager.hideMessages()
+            );
+            this.verificationElements.orderNumberInput.addEventListener(
+                "input",
+                () => uiManager.hideMessages()
+            );
         }
     }
 
@@ -370,10 +415,13 @@ class MultiOrderVerification {
 
         if (orderNumber && orderNumber.trim()) {
             // 如果URL中有订单号，自动填充并尝试验证
-            this.verificationElements.orderNumberInput.value = orderNumber.trim();
+            this.verificationElements.orderNumberInput.value =
+                orderNumber.trim();
             // 延迟一点再自动验证，确保页面完全加载
             setTimeout(() => {
-                this.verificationElements.verificationForm.dispatchEvent(new Event("submit"));
+                this.verificationElements.verificationForm.dispatchEvent(
+                    new Event("submit")
+                );
             }, 500);
         } else {
             // 检查会话状态
