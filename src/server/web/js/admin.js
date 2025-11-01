@@ -582,55 +582,53 @@ class AdminInterface {
         let html = '';
 
         // 上一页按钮
-        html += `<button ${pagination.page <= 1 ? 'disabled' : ''} data-action="page" data-page="${pagination.page - 1}" data-function="${loadFunction.name}">上一页</button>`;
+        html += `<button ${pagination.page <= 1 ? 'disabled' : ''} data-action="page" data-page="${pagination.page - 1}">上一页</button>`;
 
         // 页码按钮
         const startPage = Math.max(1, pagination.page - 2);
         const endPage = Math.min(pagination.totalPages, pagination.page + 2);
 
         if (startPage > 1) {
-            html += `<button data-action="page" data-page="1" data-function="${loadFunction.name}">1</button>`;
+            html += `<button data-action="page" data-page="1">1</button>`;
             if (startPage > 2) {
                 html += '<span>...</span>';
             }
         }
 
         for (let i = startPage; i <= endPage; i++) {
-            html += `<button ${i === pagination.page ? 'class="active"' : ''} data-action="page" data-page="${i}" data-function="${loadFunction.name}">${i}</button>`;
+            html += `<button ${i === pagination.page ? 'class="active"' : ''} data-action="page" data-page="${i}">${i}</button>`;
         }
 
         if (endPage < pagination.totalPages) {
             if (endPage < pagination.totalPages - 1) {
                 html += '<span>...</span>';
             }
-            html += `<button data-action="page" data-page="${pagination.totalPages}" data-function="${loadFunction.name}">${pagination.totalPages}</button>`;
+            html += `<button data-action="page" data-page="${pagination.totalPages}">${pagination.totalPages}</button>`;
         }
 
         // 下一页按钮
-        html += `<button ${pagination.page >= pagination.totalPages ? 'disabled' : ''} data-action="page" data-page="${pagination.page + 1}" data-function="${loadFunction.name}">下一页</button>`;
+        html += `<button ${pagination.page >= pagination.totalPages ? 'disabled' : ''} data-action="page" data-page="${pagination.page + 1}">下一页</button>`;
 
         // 页面信息
         html += `<span class="page-info">第 ${pagination.page} 页，共 ${pagination.totalPages} 页</span>`;
 
         container.innerHTML = html;
 
-        // 添加事件委托
-        container.addEventListener('click', (e) => {
+        // 移除旧的事件监听器（如果存在）
+        container.removeEventListener('click', this._paginationClickHandler);
+
+        // 创建并保存新的事件监听器
+        this._paginationClickHandler = (e) => {
             const button = e.target.closest('button[data-action="page"]');
             if (button && !button.disabled) {
+                e.preventDefault();
                 const page = parseInt(button.dataset.page);
-                const functionName = button.dataset.function;
-                this.goToPage(page, functionName);
+                loadFunction.call(this, page);
             }
-        });
-    }
+        };
 
-    goToPage(page, functionName) {
-        if (functionName === 'loadOrderList') {
-            this.loadOrderList(page);
-        } else if (functionName === 'searchOrders') {
-            this.searchOrders(page);
-        }
+        // 添加新的事件委托
+        container.addEventListener('click', this._paginationClickHandler);
     }
 
     openModal(modalId) {
