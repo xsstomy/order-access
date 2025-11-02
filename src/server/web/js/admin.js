@@ -285,14 +285,21 @@ class AdminInterface {
     async checkAuthStatus() {
         try {
             const data = await this.apiCall("/api/admin/status");
-            if (data.success) {
+            if (data.success && data.authenticated) {
                 this.showAdminScreen();
                 this.updateSessionInfo(data);
             } else {
-                this.showLoginScreen();
+                const message =
+                    data.success && data.authenticated === false
+                        ? "登录状态已过期，请重新登录"
+                        : null;
+                this.showLoginScreen(message);
             }
         } catch (error) {
-            this.showLoginScreen();
+            const message = error?.isAuthError
+                ? "登录状态已过期，请重新登录"
+                : null;
+            this.showLoginScreen(message);
         }
     }
 
