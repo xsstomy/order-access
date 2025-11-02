@@ -31,6 +31,8 @@ class AdminInterface {
     }
 
     bindEvents() {
+        this.setupNavbarBurger();
+
         // 登录表单
         document.getElementById("loginForm").addEventListener("submit", (e) => {
             e.preventDefault();
@@ -120,6 +122,36 @@ class AdminInterface {
             .addEventListener("click", () => {
                 this.loadVerificationRecords();
             });
+    }
+
+    setupNavbarBurger() {
+        const burger = document.querySelector(".navbar-burger");
+        if (!burger) {
+            return;
+        }
+
+        const targetId = burger.dataset.target;
+        const menu = targetId ? document.getElementById(targetId) : null;
+
+        burger.addEventListener("click", () => {
+            const isActive = burger.classList.toggle("is-active");
+            burger.setAttribute("aria-expanded", String(isActive));
+            if (menu) {
+                menu.classList.toggle("is-active", isActive);
+            }
+        });
+
+        if (menu) {
+            const collapseMenu = () => {
+                burger.classList.remove("is-active");
+                burger.setAttribute("aria-expanded", "false");
+                menu.classList.remove("is-active");
+            };
+
+            menu.querySelectorAll(".navbar-item, .button").forEach((item) => {
+                item.addEventListener("click", collapseMenu);
+            });
+        }
     }
 
     bindModalEvents() {
