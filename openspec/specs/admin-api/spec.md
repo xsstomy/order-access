@@ -1,5 +1,8 @@
-## ADDED Requirements
+# admin-api Specification
 
+## Purpose
+TBD - created by archiving change add-batch-text-import. Update Purpose after archive.
+## Requirements
 ### Requirement: Text File Batch Import
 The system SHALL provide an API endpoint for bulk importing order numbers from text files into the multi_orders table.
 
@@ -33,13 +36,3 @@ The system SHALL provide an API endpoint for bulk importing order numbers from t
 - **AND** specify supported file formats and size limits
 - **AND** maintain security by validating file content
 
-## MODIFIED Requirements
-
-### Requirement: Admin Order Management Interface
-The admin interface SHALL provide comprehensive order management capabilities including individual order addition, batch JSON import, and text file import.
-
-#### Scenario: Unified import interface
-- **WHEN** an admin accesses the order management section
-- **THEN** the interface shall display three import options: single order, JSON batch, and text file upload
-- **AND** provide clear instructions for each import method
-- **AND** show appropriate form fields and validation for each method
