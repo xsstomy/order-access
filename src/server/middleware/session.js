@@ -25,9 +25,10 @@ class SessionManager {
     this.activeSessions.set(sessionId, session);
 
     // 设置会话过期清理
+    const userSessionMaxAge = parseInt(process.env.SESSION_MAX_AGE) || 7200000; // 默认2小时
     setTimeout(() => {
       this.removeSession(sessionId);
-    }, 7200000); // 2小时
+    }, userSessionMaxAge);
 
     console.log(`创建会话: ${sessionId}, 订单: ${orderNumber}, IP: ${ipAddress}`);
     return sessionId;
@@ -71,10 +72,11 @@ class SessionManager {
   cleanupExpiredSessions() {
     const now = new Date();
     const expiredSessions = [];
+    const userSessionMaxAge = parseInt(process.env.SESSION_MAX_AGE) || 7200000; // 默认2小时
 
     for (const [sessionId, session] of this.activeSessions.entries()) {
       const sessionAge = now - session.createdAt;
-      if (sessionAge > 7200000) { // 2小时
+      if (sessionAge > userSessionMaxAge) {
         expiredSessions.push(sessionId);
       }
     }
@@ -155,9 +157,10 @@ class SessionManager {
     this.adminSessions.set(sessionId, session);
 
     // 设置会话过期清理
+    const adminSessionMaxAge = parseInt(process.env.ADMIN_SESSION_MAX_AGE) || 86400000; // 默认24小时
     setTimeout(() => {
       this.removeAdminSession(sessionId);
-    }, 7200000); // 2小时
+    }, adminSessionMaxAge);
 
     console.log(`创建管理员会话: ${sessionId}`);
     return sessionId;
@@ -194,10 +197,11 @@ class SessionManager {
   cleanupExpiredAdminSessions() {
     const now = new Date();
     const expiredSessions = [];
+    const adminSessionMaxAge = parseInt(process.env.ADMIN_SESSION_MAX_AGE) || 86400000; // 默认24小时
 
     for (const [sessionId, session] of this.adminSessions.entries()) {
       const sessionAge = now - session.createdAt;
-      if (sessionAge > 7200000) { // 2小时
+      if (sessionAge > adminSessionMaxAge) {
         expiredSessions.push(sessionId);
       }
     }

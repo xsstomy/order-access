@@ -214,8 +214,9 @@ router.post('/', verifyRateLimiter, deviceMiddleware.getDeviceId(), async (req, 
         deviceInfo
       };
 
-      // 添加会话过期时间（2小时）
-      const sessionExpiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+      // 添加会话过期时间
+      const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE) || 7200000; // 默认2小时
+      const sessionExpiresAt = new Date(Date.now() + sessionMaxAge);
       response.sessionExpiresAt = sessionExpiresAt.toISOString();
 
       // 如果有24小时窗口期信息，添加到响应中
@@ -306,7 +307,8 @@ router.get('/status', (req, res) => {
     }
 
     const session = sessionManager.getSession(sessionId);
-    const sessionExpiresAt = new Date(session.createdAt.getTime() + 2 * 60 * 60 * 1000); // 2小时
+    const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE) || 7200000; // 默认2小时
+    const sessionExpiresAt = new Date(session.createdAt.getTime() + sessionMaxAge);
 
     return res.json({
       success: true,
@@ -350,7 +352,8 @@ router.post('/refresh', (req, res) => {
     const session = sessionManager.getSession(sessionId);
     session.lastAccessedAt = new Date();
 
-    const sessionExpiresAt = new Date(session.createdAt.getTime() + 2 * 60 * 60 * 1000); // 2小时
+    const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE) || 7200000; // 默认2小时
+    const sessionExpiresAt = new Date(session.createdAt.getTime() + sessionMaxAge);
 
     return res.json({
       success: true,

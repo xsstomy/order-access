@@ -26,7 +26,8 @@ router.get('/status', (req, res) => {
     }
 
     const session = sessionManager.getSession(sessionId);
-    const sessionExpiresAt = new Date(session.createdAt.getTime() + 2 * 60 * 60 * 1000); // 2小时
+    const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE) || 7200000; // 默认2小时
+    const sessionExpiresAt = new Date(session.createdAt.getTime() + sessionMaxAge);
 
     return res.json({
       success: true,
@@ -75,7 +76,8 @@ router.post('/extend', (req, res) => {
     const session = sessionManager.getSession(sessionId);
     session.lastAccessedAt = new Date();
 
-    const sessionExpiresAt = new Date(session.createdAt.getTime() + 2 * 60 * 60 * 1000); // 2小时
+    const sessionMaxAge = parseInt(process.env.SESSION_MAX_AGE) || 7200000; // 默认2小时
+    const sessionExpiresAt = new Date(session.createdAt.getTime() + sessionMaxAge);
 
     return res.json({
       success: true,
