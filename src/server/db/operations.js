@@ -30,38 +30,8 @@ class OrderOperations {
       `, [orderNumber]);
 
       if (multiOrder) {
-        // 检查多次订单是否有24小时访问窗口期
-        const accessWindow = await dbManager.get(`
-          SELECT first_accessed_at, expires_at FROM order_access_windows
-          WHERE order_number = ? AND order_type = 'multi'
-        `, [orderNumber]);
-
-        if (accessWindow) {
-          const now = new Date();
-          const expiresAt = new Date(accessWindow.expires_at);
-
-          if (now > expiresAt) {
-            // 24小时窗口期已过
-            return {
-              exists: true,
-              type: 'multi',
-              maxAccess: multiOrder.max_access,
-              windowExpired: true,
-              expiredAt: accessWindow.expires_at
-            };
-          } else {
-            // 24小时窗口期内，可以访问
-            return {
-              exists: true,
-              type: 'multi',
-              maxAccess: multiOrder.max_access,
-              hasAccessWindow: true,
-              windowExpiresAt: accessWindow.expires_at
-            };
-          }
-        }
-
-        // 没有窗口期的多次订单
+        // 多次订单不再受24小时窗口期限制
+        // 直接返回多次订单信息，忽略任何现有的24小时窗口期记录
         return {
           exists: true,
           type: 'multi',
@@ -231,9 +201,20 @@ class OrderOperations {
     }
   }
 
-  // 创建24小时访问窗口期（用于单次或多次订单）
+  // 创建24小时访问窗口期（仅用于单次订单）
   async create24HourAccessWindow(orderNumber, orderType = 'single') {
     try {
+      // 多次订单不再创建24小时访问窗口期
+      if (orderType === 'multi') {
+        console.log(`多次订单跳过24小时访问窗口期创建: ${orderNumber}`);
+        return {
+          success: true,
+          skipped: true,
+          reason: 'Multi-order does not need 24-hour access window',
+          orderType
+        };
+      }
+
       const now = this.getBeijingTime();
       const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24小时后
 

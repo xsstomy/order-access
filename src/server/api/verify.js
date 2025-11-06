@@ -160,25 +160,7 @@ router.post('/', verifyRateLimiter, deviceMiddleware.getDeviceId(), async (req, 
 
     // 处理多次订单
     if (orderInfo.type === 'multi') {
-      // 检查24小时窗口期是否过期
-      if (orderInfo.windowExpired) {
-        console.warn(`多次订单24小时窗口期已过期: ${orderNumber}, IP: ${clientIP}, 过期时间: ${orderInfo.expiredAt}`);
-        return res.json({
-          success: false,
-          message: '该订单已超过24小时访问期限，请联系客服',
-          reason: 'expired_24h'
-        });
-      }
-
-      // 如果订单没有24小时访问窗口期，创建一个
-      let windowInfo = null;
-      if (!orderInfo.hasAccessWindow) {
-        windowInfo = await orderOps.create24HourAccessWindow(orderNumber, 'multi');
-      } else {
-        windowInfo = {
-          expiresAt: orderInfo.windowExpiresAt
-        };
-      }
+      // 多次订单不再受24小时窗口期限制，移除相关检查
 
       const remainingAccess = await orderOps.checkMultiOrderRemainingAccess(orderNumber);
 
@@ -219,13 +201,7 @@ router.post('/', verifyRateLimiter, deviceMiddleware.getDeviceId(), async (req, 
       const sessionExpiresAt = new Date(Date.now() + sessionMaxAge);
       response.sessionExpiresAt = sessionExpiresAt.toISOString();
 
-      // 如果有24小时窗口期信息，添加到响应中
-      if (windowInfo && windowInfo.expiresAt) {
-        response.accessWindow = {
-          expiresAt: windowInfo.expiresAt,
-          remainingHours: Math.max(0, (new Date(windowInfo.expiresAt) - new Date()) / (1000 * 60 * 60))
-        };
-      }
+      // 多次订单不再包含24小时窗口期信息
 
       return res.json(response);
     }
