@@ -9,9 +9,9 @@ const fs = require('fs');
 const path = require('path');
 
 function backupDatabase() {
-  const dbPath = './database/orders.db';
+  const dbPath = '../database/orders.db';
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const backupPath = `./database/orders_backup_${timestamp}.db`;
+  const backupPath = `../database/orders_backup_${timestamp}.db`;
 
   console.log('🔄 创建数据库备份...\n');
 

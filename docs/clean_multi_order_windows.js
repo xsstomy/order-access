@@ -6,7 +6,7 @@
  */
 
 const path = require('path');
-const dbManager = require('./src/config/database');
+const dbManager = require('../src/config/database');
 
 async function cleanMultiOrderWindows() {
   console.log('🚀 开始清理多次订单的24小时窗口期记录...\n');
